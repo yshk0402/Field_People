@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Field People Demo</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell" aria-label="Field People Demo">
+      <aside id="workspace-nav" class="workspace" aria-label="Workspace">
+        <div class="brand">
+          <div class="brand-dot" aria-hidden="true"></div>
+          <div>
+            <h1>Field People</h1>
+            <p data-i18n="subtitle">業務管理 + Element連携</p>
+          </div>
+        </div>
+
+        <section class="workspace-card">
+          <label for="role" data-i18n="roleLabel">現在ロール</label>
+          <select id="role">
+            <option value="admin">admin</option>
+            <option value="backoffice">backoffice</option>
+            <option value="member">member</option>
+            <option value="talent">talent</option>
+          </select>
+        </section>
+
+        <nav class="nav" aria-label="Navigation">
+          <button class="nav-item active" type="button" data-target="people-pane" data-i18n="navPeople">People</button>
+          <button class="nav-item" type="button" data-target="rooms-pane" data-i18n="navRooms">Rooms</button>
+          <button class="nav-item" type="button" data-target="activity-pane" data-i18n="navActivity">Activity</button>
+        </nav>
+      </aside>
+
+      <section class="channel" aria-label="Channel">
+        <header class="section-head main-head">
+          <div class="head-left">
+            <button id="sidebar-toggle" class="btn icon-btn ghost" type="button" aria-controls="workspace-nav" aria-expanded="true" data-i18n="closeSidebar">サイドバーを閉じる</button>
+            <h2 data-i18n="peopleTitle">People</h2>
+          </div>
+          <button id="reload-people" class="btn ghost" data-i18n="reload">再読込</button>
+        </header>
+
+        <section id="people-pane" class="pane is-visible">
+          <form id="person-form" class="form" aria-label="Create Person Form">
+            <div class="form-row">
+              <input name="name" data-i18n-placeholder="personName" required />
+              <input name="display_name" data-i18n-placeholder="personDisplayName" />
+            </div>
+            <div class="form-row">
+              <input name="email" type="email" data-i18n-placeholder="personEmail" required />
+              <input name="skills" data-i18n-placeholder="personSkills" />
+            </div>
+            <div class="form-row">
+              <select name="type" required>
+                <option value="employee">employee</option>
+                <option value="contractor">contractor</option>
+                <option value="partner">partner</option>
+              </select>
+              <select name="role" required>
+                <option value="talent">talent</option>
+                <option value="member">member</option>
+                <option value="backoffice">backoffice</option>
+                <option value="admin">admin</option>
+              </select>
+              <button type="submit" class="btn" data-i18n="createPerson">人材を追加</button>
+            </div>
+          </form>
+
+          <ul id="people-list" class="stream" aria-live="polite"></ul>
+        </section>
+
+        <section id="rooms-pane" class="pane">
+          <header class="section-head nested">
+            <h2 data-i18n="roomsTitle">Rooms</h2>
+            <button id="reload-rooms" class="btn ghost" data-i18n="reload">再読込</button>
+          </header>
+          <form id="room-form" class="form" aria-label="Create Room Form">
+            <div class="form-row">
+              <select name="type" required>
+                <option value="project_room">project_room</option>
+                <option value="person_room">person_room</option>
+                <option value="community_room">community_room</option>
+              </select>
+              <input name="room_id" data-i18n-placeholder="roomIdOptional" />
+            </div>
+            <div class="form-row">
+              <input name="related_person_id" data-i18n-placeholder="relatedPersonId" />
+              <input name="related_project_id" data-i18n-placeholder="relatedProjectId" />
+            </div>
+            <div class="form-row">
+              <input name="member_user_ids" data-i18n-placeholder="roomMembers" />
+              <button type="submit" class="btn" data-i18n="createRoom">Roomを作成</button>
+            </div>
+          </form>
+
+          <ul id="room-list" class="stream" aria-live="polite"></ul>
+        </section>
+
+        <section id="activity-pane" class="pane">
+          <div id="log" class="activity" aria-live="polite"></div>
+        </section>
+      </section>
+
+      <aside class="detail" aria-label="Detail">
+        <h3 data-i18n="detailTitle">Detail</h3>
+        <p data-i18n="detailBody">People / Rooms の選択項目を将来ここに表示します。</p>
+        <div class="note" data-i18n="i18nNote">日本語完全対応は次フェーズで辞書を拡張して対応予定です。</div>
+      </aside>
+      <button id="sidebar-backdrop" class="sidebar-backdrop" type="button" aria-label="Close sidebar"></button>
+
+      <div id="app-modal" class="modal-layer" hidden>
+        <div class="modal-backdrop" data-close-modal="true"></div>
+        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-body">
+          <header class="modal-head">
+            <h3 id="modal-title">確認</h3>
+            <button id="modal-close" class="btn ghost modal-close" type="button" data-close-modal="true" aria-label="Close dialog">×</button>
+          </header>
+          <div id="modal-body" class="modal-body"></div>
+          <div id="modal-actions" class="modal-actions"></div>
+        </section>
+      </div>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
