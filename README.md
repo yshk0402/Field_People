@@ -17,6 +17,7 @@ The initial implementation starts with:
 - `backend/`: Go API skeleton and migrations
 - `frontend/`: Next.js placeholder for upcoming implementation
 - `apps/web/`: immediately runnable web demo (Node, no dependencies)
+  - Auth + RBAC + MVP modules (Dashboard/People/Projects/Rooms/Contracts/Invoices/Settings)
 
 ## Quick Start (Backend)
 

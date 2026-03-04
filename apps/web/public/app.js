@@ -1,135 +1,63 @@
-const locale = 'ja';
-const I18N = {
-  ja: {
-    subtitle: '業務管理 + Element連携',
-    roleLabel: '現在ロール',
-    navPeople: 'People',
-    navRooms: 'Rooms',
-    navContracts: 'Contracts',
-    navActivity: 'Activity',
-    peopleTitle: 'People',
-    roomsTitle: 'Rooms',
-    contractsTitle: 'Contracts',
-    reload: '再読込',
-    createPerson: '人材を追加',
-    createRoom: 'Roomを作成',
-    detailTitle: 'Detail',
-    detailBody: 'People / Rooms の選択項目を将来ここに表示します。',
-    i18nNote: '日本語完全対応は次フェーズで辞書を拡張して対応予定です。',
-    openSidebar: 'サイドバーを開く',
-    closeSidebar: 'サイドバーを閉じる',
-    modalPersonTitle: '人材を追加しました',
-    modalRoomTitle: 'Roomを作成しました',
-    modalClose: '閉じる',
-    modalViewPeople: 'Peopleを確認',
-    modalViewRooms: 'Roomsを確認',
-    modalAddAnother: '続けて追加',
-    modalOpenElementWeb: 'Element Webを開く',
-    modalOpenElementMobile: 'Element Mobileを開く',
-    personName: '氏名',
-    personDisplayName: '表示名',
-    personEmail: 'メールアドレス',
-    personSkills: 'スキル（カンマ区切り）',
-    roomIdOptional: 'room_id（任意）',
-    relatedPersonId: 'related_person_id',
-    relatedProjectId: 'related_project_id',
-    roomMembers: 'メンバー user_id（カンマ区切り）',
-    logPeopleLoaded: 'People読み込み件数',
-    logPeopleLoadFailed: 'People読み込み失敗',
-    logRoomsLoaded: 'Rooms読み込み件数',
-    logRoomsLoadFailed: 'Rooms読み込み失敗',
-    logPersonCreated: '人材を作成',
-    logPersonCreateFailed: '人材作成失敗',
-    logRoomCreated: 'Roomを作成',
-    logRoomCreateFailed: 'Room作成失敗',
-    logContractsLoaded: 'Contracts読み込み件数',
-    logContractsLoadFailed: 'Contracts読み込み失敗',
-    logContractCreated: 'Contractを作成',
-    logContractCreateFailed: 'Contract作成失敗',
-    logContractStatusUpdated: 'Contractステータス更新',
-    logContractStatusUpdateFailed: 'Contractステータス更新失敗',
-    members: 'メンバー',
-    createContract: '契約を追加',
-    contractPersonId: 'person_id',
-    contractType: 'contract_type',
-    contractRate: 'rate',
-    contractCurrency: 'currency',
-    contractStartDate: 'start_date',
-    contractEndDate: 'end_date',
-    contractPaymentTerms: 'payment_terms',
-    contractDocumentUrl: 'document_url',
-    status: 'status'
-  }
-};
-
-const t = (k) => I18N[locale][k] || k;
-
-const roleEl = document.getElementById('role');
-const shellEl = document.querySelector('.shell');
-const mainTitleEl = document.querySelector('.main-head h2');
-const personForm = document.getElementById('person-form');
-const roomForm = document.getElementById('room-form');
-const contractForm = document.getElementById('contract-form');
-const peopleList = document.getElementById('people-list');
-const roomList = document.getElementById('room-list');
-const contractList = document.getElementById('contract-list');
+const authViewEl = document.getElementById('auth-view');
+const appViewEl = document.getElementById('app-view');
+const loginFormEl = document.getElementById('login-form');
+const loginErrorEl = document.getElementById('login-error');
 const logEl = document.getElementById('log');
-const sidebarToggleEl = document.getElementById('sidebar-toggle');
-const sidebarBackdropEl = document.getElementById('sidebar-backdrop');
-const modalLayerEl = document.getElementById('app-modal');
-const modalTitleEl = document.getElementById('modal-title');
-const modalBodyEl = document.getElementById('modal-body');
-const modalActionsEl = document.getElementById('modal-actions');
-const modalCloseEl = document.getElementById('modal-close');
+const paneTitleEl = document.getElementById('pane-title');
 const navItems = Array.from(document.querySelectorAll('.nav-item'));
 const panes = Array.from(document.querySelectorAll('.pane'));
+const shellEl = document.querySelector('.shell');
+const sidebarToggleEl = document.getElementById('sidebar-toggle');
+const sidebarBackdropEl = document.getElementById('sidebar-backdrop');
 const mobileQuery = window.matchMedia('(max-width: 900px)');
-let lastFocusedEl = null;
 
-function applyI18n() {
-  document.querySelectorAll('[data-i18n]').forEach((el) => {
-    el.textContent = t(el.dataset.i18n);
-  });
-  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
-    el.placeholder = t(el.dataset.i18nPlaceholder);
-  });
-}
+const currentUserNameEl = document.getElementById('current-user-name');
+const currentUserRoleEl = document.getElementById('current-user-role');
+const currentUserEmailEl = document.getElementById('current-user-email');
 
-function log(message, error = false) {
-  const now = new Date().toLocaleTimeString();
-  const color = error ? '#b91c1c' : '#111111';
-  logEl.innerHTML = `<div style="color:${color}">[${now}] ${message}</div>`;
-}
+const peopleListEl = document.getElementById('people-list');
+const projectListEl = document.getElementById('project-list');
+const roomListEl = document.getElementById('room-list');
+const contractListEl = document.getElementById('contract-list');
+const invoiceListEl = document.getElementById('invoice-list');
+const dashboardCardsEl = document.getElementById('dashboard-cards');
+const inviteResultEl = document.getElementById('invite-result');
 
-async function api(path, options = {}) {
-  const headers = {
-    'content-type': 'application/json',
-    'x-role': roleEl.value,
-    'x-user-id': 'demo-user',
-    ...(options.headers || {})
-  };
+const forms = {
+  person: document.getElementById('person-form'),
+  project: document.getElementById('project-form'),
+  room: document.getElementById('room-form'),
+  contract: document.getElementById('contract-form'),
+  invoice: document.getElementById('invoice-form'),
+  profile: document.getElementById('profile-form'),
+  notify: document.getElementById('notify-form'),
+  password: document.getElementById('password-form'),
+  invite: document.getElementById('invite-form')
+};
 
-  const res = await fetch(path, { ...options, headers });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-  return data;
-}
+const notifyEmailEl = document.getElementById('notify-email');
+const notifyMatrixEl = document.getElementById('notify-matrix');
 
-function activatePane(target) {
-  navItems.forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.target === target);
-  });
-  panes.forEach((pane) => {
-    pane.classList.toggle('is-visible', pane.id === target);
-  });
-  const titleMap = {
-    'people-pane': 'peopleTitle',
-    'rooms-pane': 'roomsTitle',
-    'contracts-pane': 'contractsTitle',
-    'activity-pane': 'navActivity'
-  };
-  mainTitleEl.textContent = t(titleMap[target] || 'peopleTitle');
-}
+const paneLabels = {
+  'dashboard-pane': 'Dashboard',
+  'people-pane': 'People',
+  'projects-pane': 'Projects',
+  'rooms-pane': 'Rooms',
+  'contracts-pane': 'Contracts',
+  'invoices-pane': 'Invoices',
+  'settings-pane': 'Settings',
+  'activity-pane': 'Activity'
+};
+
+const ACL = {
+  admin: { person: true, project: true, room: true, contract: true, invoice: true, invite: true, invoiceStatus: true, contractStatus: true },
+  backoffice: { person: true, project: false, room: true, contract: true, invoice: false, invite: true, invoiceStatus: true, contractStatus: true },
+  member: { person: false, project: true, room: true, contract: false, invoice: false, invite: false, invoiceStatus: false, contractStatus: false },
+  talent: { person: false, project: false, room: false, contract: false, invoice: true, invite: false, invoiceStatus: false, contractStatus: false }
+};
+
+let token = localStorage.getItem('fp:token') || '';
+let me = null;
 
 function escapeHTML(value) {
   return String(value || '')
@@ -140,54 +68,75 @@ function escapeHTML(value) {
     .replaceAll("'", '&#39;');
 }
 
-function closeModal() {
-  modalLayerEl.hidden = true;
-  document.body.classList.remove('modal-open');
-  modalBodyEl.textContent = '';
-  modalActionsEl.innerHTML = '';
-  if (lastFocusedEl && typeof lastFocusedEl.focus === 'function') {
-    lastFocusedEl.focus();
-  }
+function log(message, error = false) {
+  const now = new Date().toLocaleTimeString();
+  const color = error ? '#b91c1c' : '#111111';
+  logEl.innerHTML = `<div style="color:${color}">[${now}] ${escapeHTML(message)}</div>`;
 }
 
-function openModal({ title, bodyHTML, actions = [] }) {
-  lastFocusedEl = document.activeElement;
-  modalTitleEl.textContent = title;
-  modalBodyEl.innerHTML = bodyHTML;
-  modalActionsEl.innerHTML = '';
+async function api(path, options = {}) {
+  const headers = {
+    'content-type': 'application/json',
+    ...(options.headers || {})
+  };
+  if (token) headers.authorization = `Bearer ${token}`;
 
-  for (const action of actions) {
-    const node = action.href ? document.createElement('a') : document.createElement('button');
-    node.textContent = action.label;
-    node.className = action.variant === 'secondary' ? 'btn secondary' : 'btn';
-    if (action.href) {
-      node.href = action.href;
-      node.target = action.target || '_blank';
-      node.rel = action.rel || 'noreferrer';
-    } else {
-      node.type = 'button';
-      node.addEventListener('click', () => {
-        if (typeof action.onClick === 'function') action.onClick();
-      });
+  const res = await fetch(path, { ...options, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (res.status === 401 && path !== '/api/v1/auth/login') {
+      logout(true);
     }
-    if (action.closeOnClick !== false) {
-      node.addEventListener('click', closeModal);
-    }
-    modalActionsEl.appendChild(node);
+    throw new Error(data.error || `HTTP ${res.status}`);
   }
+  return data;
+}
 
-  if (!actions.length) {
-    const fallback = document.createElement('button');
-    fallback.type = 'button';
-    fallback.className = 'btn';
-    fallback.textContent = t('modalClose');
-    fallback.addEventListener('click', closeModal);
-    modalActionsEl.appendChild(fallback);
-  }
+function setViewAuthed(isAuthed) {
+  authViewEl.classList.toggle('hidden', isAuthed);
+  appViewEl.classList.toggle('hidden', !isAuthed);
+}
 
-  modalLayerEl.hidden = false;
-  document.body.classList.add('modal-open');
-  modalCloseEl.focus();
+function setCurrentUserUI(user) {
+  currentUserNameEl.textContent = user.display_name || user.name;
+  currentUserRoleEl.textContent = user.role;
+  currentUserEmailEl.textContent = user.email;
+
+  document.getElementById('settings-display-name').value = user.display_name || '';
+  document.getElementById('settings-timezone').value = user.timezone || '';
+  document.getElementById('settings-locale').value = user.locale || '';
+  notifyEmailEl.checked = Boolean(user.notify_email);
+  notifyMatrixEl.checked = Boolean(user.notify_matrix);
+  const invoicePerson = document.getElementById('invoice-person-id');
+  if (user.person_id && invoicePerson) invoicePerson.value = user.person_id;
+}
+
+function setFormState(form, enabled) {
+  if (!form) return;
+  form.querySelectorAll('input,select,button,textarea').forEach((el) => {
+    el.disabled = !enabled;
+  });
+}
+
+function applyRBAC() {
+  const role = me?.role || 'talent';
+  const caps = ACL[role] || ACL.talent;
+  setFormState(forms.person, caps.person);
+  setFormState(forms.project, caps.project);
+  setFormState(forms.room, caps.room);
+  setFormState(forms.contract, caps.contract);
+  setFormState(forms.invoice, caps.invoice);
+  setFormState(forms.invite, caps.invite);
+}
+
+function activatePane(target) {
+  navItems.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.target === target);
+  });
+  panes.forEach((pane) => {
+    pane.classList.toggle('is-visible', pane.id === target);
+  });
+  paneTitleEl.textContent = paneLabels[target] || 'Dashboard';
 }
 
 function updateSidebarToggleLabel() {
@@ -196,13 +145,7 @@ function updateSidebarToggleLabel() {
   const isCollapsed = shellEl.classList.contains('is-sidebar-collapsed');
   const expanded = isMobile ? isOpen : !isCollapsed;
   sidebarToggleEl.setAttribute('aria-expanded', String(expanded));
-  sidebarToggleEl.textContent = t(expanded ? 'closeSidebar' : 'openSidebar');
-}
-
-function setDesktopSidebarCollapsed(collapsed) {
-  shellEl.classList.toggle('is-sidebar-collapsed', collapsed);
-  localStorage.setItem('fp:sidebar-collapsed', collapsed ? '1' : '0');
-  updateSidebarToggleLabel();
+  sidebarToggleEl.textContent = expanded ? 'サイドバーを閉じる' : 'サイドバーを開く';
 }
 
 function closeMobileSidebar() {
@@ -217,213 +160,389 @@ function syncSidebarState() {
     return;
   }
   shellEl.classList.remove('is-sidebar-open');
-  setDesktopSidebarCollapsed(localStorage.getItem('fp:sidebar-collapsed') === '1');
+  shellEl.classList.toggle('is-sidebar-collapsed', localStorage.getItem('fp:sidebar-collapsed') === '1');
+  updateSidebarToggleLabel();
+}
+
+function collectCSV(value) {
+  return String(value || '').split(',').map((v) => v.trim()).filter(Boolean);
+}
+
+async function loadDashboard() {
+  const data = await api('/api/v1/dashboard');
+  const cards = [
+    ['契約更新(30日以内)', data.contracts_expiring_30d],
+    ['未提出請求', data.invoices_unsubmitted],
+    ['未承認請求', data.invoices_unapproved],
+    ['期限タスク(7日以内)', data.tasks_due_7d]
+  ];
+  dashboardCardsEl.innerHTML = cards.map(([k, v]) => `<article class="card"><h3>${escapeHTML(k)}</h3><div class="card-value">${escapeHTML(v)}</div></article>`).join('');
 }
 
 async function loadPeople() {
-  try {
-    const data = await api('/api/v1/people');
-    peopleList.innerHTML = '';
-    for (const p of data.items || []) {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div class="item-top">
-          <strong>${p.name}</strong>
-          <span class="badge">${p.role}</span>
-        </div>
-        <div>${p.email}</div>
-        <div style="margin-top:6px">
-          <span class="badge type">${p.type}</span>
-          <span class="badge">${p.status}</span>
-        </div>
-      `;
-      peopleList.appendChild(li);
-    }
-    log(`${t('logPeopleLoaded')}: ${data.items?.length || 0}`);
-  } catch (e) {
-    log(`${t('logPeopleLoadFailed')}: ${e.message}`, true);
-  }
+  const data = await api('/api/v1/people');
+  peopleListEl.innerHTML = (data.items || []).map((p) => `
+    <li>
+      <div class="item-top"><strong>${escapeHTML(p.name)}</strong><span class="badge">${escapeHTML(p.role)}</span></div>
+      <div>${escapeHTML(p.email)}</div>
+      <div><span class="badge type">${escapeHTML(p.type)}</span> <span class="badge">${escapeHTML(p.status)}</span></div>
+      <div class="muted">${escapeHTML((p.skills || []).join(', '))}</div>
+    </li>
+  `).join('');
+}
+
+async function loadProjects() {
+  const data = await api('/api/v1/projects');
+  projectListEl.innerHTML = (data.items || []).map((p) => `
+    <li>
+      <div class="item-top"><strong>${escapeHTML(p.name)}</strong><span class="badge type">${escapeHTML(p.status)}</span></div>
+      <div>${escapeHTML(p.description || '-')}</div>
+      <div>期間: ${escapeHTML(p.start_date || '-')} ~ ${escapeHTML(p.end_date || '-')}</div>
+      <div class="muted">members: ${escapeHTML((p.member_person_ids || []).join(', ') || '-')}</div>
+    </li>
+  `).join('');
 }
 
 async function loadRooms() {
-  try {
-    const data = await api('/api/v1/rooms');
-    roomList.innerHTML = '';
-    for (const r of data.items || []) {
-      const links = await api(`/api/v1/rooms/${encodeURIComponent(r.room_id)}/links`).catch(() => null);
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div class="item-top">
-          <strong>${r.room_id}</strong>
-          <span class="badge type">${r.type}</span>
-        </div>
-        <div>${t('members')}: ${(r.member_user_ids || []).join(', ') || '-'}</div>
-        ${links ? `<div class="links"><a href="${links.links.element_web}" target="_blank" rel="noreferrer">Element Web</a><a href="${links.links.element_mobile}">Element Mobile</a></div>` : ''}
-      `;
-      roomList.appendChild(li);
-    }
-    log(`${t('logRoomsLoaded')}: ${data.items?.length || 0}`);
-  } catch (e) {
-    log(`${t('logRoomsLoadFailed')}: ${e.message}`, true);
+  const data = await api('/api/v1/rooms');
+  roomListEl.innerHTML = '';
+  for (const r of data.items || []) {
+    const links = await api(`/api/v1/rooms/${encodeURIComponent(r.room_id)}/links`).catch(() => null);
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="item-top"><strong>${escapeHTML(r.room_id)}</strong><span class="badge type">${escapeHTML(r.type)}</span></div>
+      <div>members: ${escapeHTML((r.member_user_ids || []).join(', ') || '-')}</div>
+      ${links ? `<div class="links"><a href="${links.links.element_web}" target="_blank" rel="noreferrer">Element Web</a><a href="${links.links.element_mobile}">Element Mobile</a></div>` : ''}
+    `;
+    roomListEl.appendChild(li);
   }
+}
+
+function statusButton(label, kind, id, type) {
+  return `<button class="btn ghost js-status-btn" type="button" data-kind="${type}" data-id="${escapeHTML(id)}" data-status="${kind}">${escapeHTML(label)}</button>`;
 }
 
 async function loadContracts() {
-  try {
-    const data = await api('/api/v1/contracts');
-    contractList.innerHTML = '';
-    for (const c of data.items || []) {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div class="item-top">
-          <strong>${c.contract_id}</strong>
-          <span class="badge type">${c.contract_type}</span>
-        </div>
-        <div>person_id: ${c.person_id}</div>
-        <div>rate: ${c.rate} ${c.currency} / status: <span class="badge">${c.status}</span></div>
-        <div>term: ${c.start_date} ~ ${c.end_date}</div>
-        <div class="links">
-          <button class="btn ghost contract-status-btn" type="button" data-contract-id="${c.contract_id}" data-status="active">active</button>
-          <button class="btn ghost contract-status-btn" type="button" data-contract-id="${c.contract_id}" data-status="ended">ended</button>
-          <button class="btn ghost contract-status-btn" type="button" data-contract-id="${c.contract_id}" data-status="cancelled">cancelled</button>
-        </div>
-      `;
-      contractList.appendChild(li);
-    }
-    contractList.querySelectorAll('.contract-status-btn').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        try {
-          await api(`/api/v1/contracts/${encodeURIComponent(btn.dataset.contractId)}/status`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status: btn.dataset.status })
-          });
-          log(`${t('logContractStatusUpdated')}: ${btn.dataset.contractId} -> ${btn.dataset.status}`);
-          await loadContracts();
-        } catch (e) {
-          log(`${t('logContractStatusUpdateFailed')}: ${e.message}`, true);
-        }
-      });
-    });
-    log(`${t('logContractsLoaded')}: ${data.items?.length || 0}`);
-  } catch (e) {
-    log(`${t('logContractsLoadFailed')}: ${e.message}`, true);
-  }
+  const data = await api('/api/v1/contracts');
+  const canChange = Boolean(ACL[me.role]?.contractStatus);
+  contractListEl.innerHTML = (data.items || []).map((c) => `
+    <li>
+      <div class="item-top"><strong>${escapeHTML(c.contract_id)}</strong><span class="badge type">${escapeHTML(c.contract_type)}</span></div>
+      <div>person_id: ${escapeHTML(c.person_id)}</div>
+      <div>rate: ${escapeHTML(c.rate)} ${escapeHTML(c.currency)} / status: <span class="badge">${escapeHTML(c.status)}</span></div>
+      <div>term: ${escapeHTML(c.start_date)} ~ ${escapeHTML(c.end_date)}</div>
+      ${canChange ? `<div class="links">${statusButton('active', 'active', c.contract_id, 'contract')}${statusButton('ended', 'ended', c.contract_id, 'contract')}${statusButton('cancelled', 'cancelled', c.contract_id, 'contract')}</div>` : ''}
+    </li>
+  `).join('');
 }
 
-personForm.addEventListener('submit', async (ev) => {
+async function loadInvoices() {
+  const data = await api('/api/v1/invoices');
+  const canChange = Boolean(ACL[me.role]?.invoiceStatus);
+  invoiceListEl.innerHTML = (data.items || []).map((i) => `
+    <li>
+      <div class="item-top"><strong>${escapeHTML(i.invoice_id)}</strong><span class="badge type">${escapeHTML(i.status)}</span></div>
+      <div>person_id: ${escapeHTML(i.person_id)} / period: ${escapeHTML(i.period)}</div>
+      <div>amount: ${escapeHTML(i.amount)} ${escapeHTML(i.currency)}</div>
+      ${canChange ? `<div class="links">${statusButton('submitted', 'submitted', i.invoice_id, 'invoice')}${statusButton('approved', 'approved', i.invoice_id, 'invoice')}${statusButton('paid', 'paid', i.invoice_id, 'invoice')}</div>` : ''}
+    </li>
+  `).join('');
+}
+
+async function refreshAll() {
+  await Promise.allSettled([
+    loadDashboard(),
+    loadPeople(),
+    loadProjects(),
+    loadRooms(),
+    loadContracts(),
+    loadInvoices()
+  ]);
+}
+
+async function login(email, password) {
+  const res = await api('/api/v1/auth/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  token = res.token;
+  localStorage.setItem('fp:token', token);
+  me = res.user;
+}
+
+async function bootstrapAuthed() {
+  const meRes = await api('/api/v1/auth/me');
+  me = meRes.user;
+  setCurrentUserUI(me);
+  applyRBAC();
+  setViewAuthed(true);
+  activatePane('dashboard-pane');
+  await refreshAll();
+  log(`ログイン済み: ${me.email} (${me.role})`);
+}
+
+function logout(silent = false) {
+  token = '';
+  me = null;
+  localStorage.removeItem('fp:token');
+  setViewAuthed(false);
+  if (!silent) log('ログアウトしました');
+}
+
+loginFormEl.addEventListener('submit', async (ev) => {
   ev.preventDefault();
-  const fd = new FormData(personForm);
-  const body = {
-    name: fd.get('name'),
-    display_name: fd.get('display_name'),
-    email: fd.get('email'),
-    type: fd.get('type'),
-    role: fd.get('role'),
-    skills: String(fd.get('skills') || '').split(',').map((v) => v.trim()).filter(Boolean)
-  };
+  loginErrorEl.textContent = '';
+  const fd = new FormData(loginFormEl);
   try {
-    const created = await api('/api/v1/people', { method: 'POST', body: JSON.stringify(body) });
-    log(`${t('logPersonCreated')}: ${created.person_id}`);
-    personForm.reset();
+    await login(String(fd.get('email') || ''), String(fd.get('password') || ''));
+    await bootstrapAuthed();
+  } catch (e) {
+    loginErrorEl.textContent = `ログイン失敗: ${e.message}`;
+  }
+});
+
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  try {
+    await api('/api/v1/auth/logout', { method: 'POST' });
+  } catch {
+    // ignore
+  }
+  logout();
+});
+
+document.getElementById('global-reload').addEventListener('click', async () => {
+  try {
+    await refreshAll();
+    log('データを再読込しました');
+  } catch (e) {
+    log(`再読込に失敗: ${e.message}`, true);
+  }
+});
+
+forms.person.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const fd = new FormData(forms.person);
+  try {
+    await api('/api/v1/people', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: fd.get('name'),
+        display_name: fd.get('display_name'),
+        email: fd.get('email'),
+        type: fd.get('type'),
+        role: fd.get('role'),
+        skills: collectCSV(fd.get('skills'))
+      })
+    });
+    forms.person.reset();
     await loadPeople();
-    openModal({
-      title: t('modalPersonTitle'),
-      bodyHTML: `<p><strong>${escapeHTML(created.name || body.name)}</strong> (${escapeHTML(created.role)})</p><p>ID: ${escapeHTML(created.person_id)}</p>`,
-      actions: [
-        {
-          label: t('modalAddAnother'),
-          variant: 'secondary',
-          onClick: () => personForm.querySelector('input[name=\"name\"]')?.focus()
-        },
-        {
-          label: t('modalViewPeople'),
-          onClick: () => activatePane('people-pane')
-        }
-      ]
-    });
+    log('Peopleを追加しました');
   } catch (e) {
-    log(`${t('logPersonCreateFailed')}: ${e.message}`, true);
+    log(`People作成失敗: ${e.message}`, true);
   }
 });
 
-roomForm.addEventListener('submit', async (ev) => {
+forms.project.addEventListener('submit', async (ev) => {
   ev.preventDefault();
-  const fd = new FormData(roomForm);
-  const body = {
-    type: fd.get('type'),
-    room_id: fd.get('room_id'),
-    related_person_id: fd.get('related_person_id'),
-    related_project_id: fd.get('related_project_id'),
-    member_user_ids: String(fd.get('member_user_ids') || '').split(',').map((v) => v.trim()).filter(Boolean)
-  };
+  const fd = new FormData(forms.project);
   try {
-    const created = await api('/api/v1/rooms', { method: 'POST', body: JSON.stringify(body) });
-    log(`${t('logRoomCreated')}: ${created.room_id}`);
-    roomForm.reset();
+    await api('/api/v1/projects', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: fd.get('name'),
+        description: fd.get('description'),
+        start_date: fd.get('start_date'),
+        end_date: fd.get('end_date'),
+        pm: fd.get('pm'),
+        member_person_ids: collectCSV(fd.get('member_person_ids'))
+      })
+    });
+    forms.project.reset();
+    await loadProjects();
+    log('Projectを作成しました');
+  } catch (e) {
+    log(`Project作成失敗: ${e.message}`, true);
+  }
+});
+
+forms.room.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const fd = new FormData(forms.room);
+  try {
+    await api('/api/v1/rooms', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: fd.get('type'),
+        room_id: fd.get('room_id'),
+        related_person_id: fd.get('related_person_id'),
+        related_project_id: fd.get('related_project_id'),
+        member_user_ids: collectCSV(fd.get('member_user_ids'))
+      })
+    });
+    forms.room.reset();
     await loadRooms();
-    const links = await api(`/api/v1/rooms/${encodeURIComponent(created.room_id)}/links`).catch(() => null);
-    const actions = [
-      {
-        label: t('modalViewRooms'),
-        variant: 'secondary',
-        onClick: () => activatePane('rooms-pane')
-      }
-    ];
-    if (links?.links?.element_web) {
-      actions.push({
-        label: t('modalOpenElementWeb'),
-        href: links.links.element_web
-      });
-    }
-    if (links?.links?.element_mobile) {
-      actions.push({
-        label: t('modalOpenElementMobile'),
-        href: links.links.element_mobile,
-        target: '_self',
-        rel: ''
-      });
-    }
-    openModal({
-      title: t('modalRoomTitle'),
-      bodyHTML: `<p><strong>${escapeHTML(created.room_id)}</strong></p><p>${t('members')}: ${escapeHTML((created.member_user_ids || []).join(', ') || '-')}</p>`,
-      actions
-    });
+    log('Roomを作成しました');
   } catch (e) {
-    log(`${t('logRoomCreateFailed')}: ${e.message}`, true);
+    log(`Room作成失敗: ${e.message}`, true);
   }
 });
 
-contractForm.addEventListener('submit', async (ev) => {
+forms.contract.addEventListener('submit', async (ev) => {
   ev.preventDefault();
-  const fd = new FormData(contractForm);
-  const body = {
-    person_id: fd.get('person_id'),
-    contract_type: fd.get('contract_type'),
-    rate: Number(fd.get('rate')),
-    currency: fd.get('currency'),
-    start_date: fd.get('start_date'),
-    end_date: fd.get('end_date'),
-    payment_terms: fd.get('payment_terms'),
-    document_url: fd.get('document_url')
-  };
+  const fd = new FormData(forms.contract);
   try {
-    const created = await api('/api/v1/contracts', { method: 'POST', body: JSON.stringify(body) });
-    log(`${t('logContractCreated')}: ${created.contract_id}`);
-    contractForm.reset();
+    await api('/api/v1/contracts', {
+      method: 'POST',
+      body: JSON.stringify({
+        person_id: fd.get('person_id'),
+        contract_type: fd.get('contract_type'),
+        rate: Number(fd.get('rate')),
+        currency: fd.get('currency'),
+        start_date: fd.get('start_date'),
+        end_date: fd.get('end_date'),
+        payment_terms: fd.get('payment_terms'),
+        document_url: fd.get('document_url')
+      })
+    });
+    forms.contract.reset();
     await loadContracts();
-    activatePane('contracts-pane');
+    await loadDashboard();
+    log('Contractを作成しました');
   } catch (e) {
-    log(`${t('logContractCreateFailed')}: ${e.message}`, true);
+    log(`Contract作成失敗: ${e.message}`, true);
   }
 });
 
-document.getElementById('reload-people').addEventListener('click', loadPeople);
-document.getElementById('reload-rooms').addEventListener('click', loadRooms);
-document.getElementById('reload-contracts').addEventListener('click', loadContracts);
-roleEl.addEventListener('change', async () => {
-  await loadPeople();
-  await loadRooms();
-  await loadContracts();
+forms.invoice.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const fd = new FormData(forms.invoice);
+  try {
+    await api('/api/v1/invoices', {
+      method: 'POST',
+      body: JSON.stringify({
+        person_id: fd.get('person_id'),
+        period: fd.get('period'),
+        amount: Number(fd.get('amount')),
+        currency: fd.get('currency'),
+        file_url: fd.get('file_url')
+      })
+    });
+    forms.invoice.reset();
+    if (me?.person_id) document.getElementById('invoice-person-id').value = me.person_id;
+    await loadInvoices();
+    await loadDashboard();
+    log('Invoiceを提出しました');
+  } catch (e) {
+    log(`Invoice提出失敗: ${e.message}`, true);
+  }
+});
+
+forms.profile.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const fd = new FormData(forms.profile);
+  try {
+    const res = await api('/api/v1/settings/profile', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        display_name: fd.get('display_name'),
+        timezone: fd.get('timezone'),
+        locale: fd.get('locale')
+      })
+    });
+    me = res.user;
+    setCurrentUserUI(me);
+    log('プロフィール設定を更新しました');
+  } catch (e) {
+    log(`プロフィール更新失敗: ${e.message}`, true);
+  }
+});
+
+forms.notify.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  try {
+    const res = await api('/api/v1/settings/notifications', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        notify_email: notifyEmailEl.checked,
+        notify_matrix: notifyMatrixEl.checked
+      })
+    });
+    me = res.user;
+    setCurrentUserUI(me);
+    log('通知設定を更新しました');
+  } catch (e) {
+    log(`通知設定更新失敗: ${e.message}`, true);
+  }
+});
+
+forms.password.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const fd = new FormData(forms.password);
+  try {
+    await api('/api/v1/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({
+        old_password: fd.get('old_password'),
+        new_password: fd.get('new_password')
+      })
+    });
+    forms.password.reset();
+    log('パスワードを変更しました');
+  } catch (e) {
+    log(`パスワード変更失敗: ${e.message}`, true);
+  }
+});
+
+forms.invite.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const fd = new FormData(forms.invite);
+  inviteResultEl.textContent = '';
+  try {
+    const res = await api('/api/v1/auth/invite', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: fd.get('name'),
+        email: fd.get('email'),
+        role: fd.get('role'),
+        person_id: fd.get('person_id')
+      })
+    });
+    inviteResultEl.textContent = `招待作成: ${res.user.email} / temp_password: ${res.temp_password}`;
+    forms.invite.reset();
+    log('ユーザー招待を作成しました');
+  } catch (e) {
+    log(`招待作成失敗: ${e.message}`, true);
+  }
+});
+
+document.addEventListener('click', async (ev) => {
+  const btn = ev.target.closest('.js-status-btn');
+  if (!btn) return;
+
+  const kind = btn.dataset.kind;
+  const id = btn.dataset.id;
+  const status = btn.dataset.status;
+  try {
+    if (kind === 'contract') {
+      await api(`/api/v1/contracts/${encodeURIComponent(id)}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      });
+      await loadContracts();
+    }
+    if (kind === 'invoice') {
+      await api(`/api/v1/invoices/${encodeURIComponent(id)}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status })
+      });
+      await loadInvoices();
+    }
+    await loadDashboard();
+    log(`ステータス更新: ${kind} ${id} -> ${status}`);
+  } catch (e) {
+    log(`ステータス更新失敗: ${e.message}`, true);
+  }
 });
 
 navItems.forEach((btn) => {
@@ -439,23 +558,23 @@ sidebarToggleEl.addEventListener('click', () => {
     updateSidebarToggleLabel();
     return;
   }
-  setDesktopSidebarCollapsed(!shellEl.classList.contains('is-sidebar-collapsed'));
+  const collapsed = !shellEl.classList.contains('is-sidebar-collapsed');
+  shellEl.classList.toggle('is-sidebar-collapsed', collapsed);
+  localStorage.setItem('fp:sidebar-collapsed', collapsed ? '1' : '0');
+  updateSidebarToggleLabel();
 });
 
 sidebarBackdropEl.addEventListener('click', closeMobileSidebar);
 mobileQuery.addEventListener('change', syncSidebarState);
-modalCloseEl.addEventListener('click', closeModal);
-modalLayerEl.addEventListener('click', (ev) => {
-  if (ev.target?.dataset?.closeModal === 'true') closeModal();
-});
-document.addEventListener('keydown', (ev) => {
-  if (ev.key === 'Escape' && !modalLayerEl.hidden) closeModal();
-});
 
-applyI18n();
 syncSidebarState();
 updateSidebarToggleLabel();
-activatePane('people-pane');
-await loadPeople();
-await loadRooms();
-await loadContracts();
+activatePane('dashboard-pane');
+setViewAuthed(false);
+
+if (token) {
+  bootstrapAuthed().catch(() => {
+    logout(true);
+    loginErrorEl.textContent = 'セッションが期限切れです。再ログインしてください。';
+  });
+}

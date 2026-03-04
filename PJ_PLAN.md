@@ -216,3 +216,9 @@ T1-03 -> T1-04 -> T2-01 -> T2-02 -> T2-03 -> T2-07 -> T2-09 -> T3-01 -> T3-02 ->
    - `GET/POST /api/v1/contracts`
    - `PATCH /api/v1/contracts/{contractID}/status`
    - WebデモにContracts作成フォーム・一覧・ステータス更新UIを追加
+13. MVPデモ機能を拡張（T2-01/T2-04/T2-07/T2-11の横断）
+   - 認証APIを追加（login/logout/me/invite/reset-password）
+   - Bearer token + RBAC（role別 API制御）へ移行
+   - Projects / Invoices / Dashboard API を追加
+   - 設定画面（プロフィール/通知/パスワード変更/招待）を追加
+   - Web UIを MVP ナビ構成（Dashboard/People/Projects/Rooms/Contracts/Invoices/Settings）へ拡張

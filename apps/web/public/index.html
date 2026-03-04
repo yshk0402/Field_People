@@ -7,150 +7,227 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main class="shell" aria-label="Field People Demo">
+    <main id="auth-view" class="auth-shell" aria-labelledby="login-title">
+      <section class="auth-card" aria-live="polite">
+        <h1 id="login-title">Field People Login</h1>
+        <p class="auth-note">MVP Demo: 認証 + RBAC + 業務機能</p>
+        <form id="login-form" class="form" aria-label="Login Form">
+          <div class="field">
+            <label for="login-email">Email</label>
+            <input id="login-email" name="email" type="email" required autocomplete="username" />
+          </div>
+          <div class="field">
+            <label for="login-password">Password</label>
+            <input id="login-password" name="password" type="password" required autocomplete="current-password" />
+          </div>
+          <button type="submit" class="btn">ログイン</button>
+        </form>
+        <div class="hint-list">
+          <div>admin@field.local / admin123</div>
+          <div>backoffice@field.local / backoffice123</div>
+          <div>member@field.local / member123</div>
+          <div>talent@field.local / talent123</div>
+        </div>
+        <div id="login-error" class="error-text" role="status" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <main id="app-view" class="shell hidden" aria-label="Field People Demo">
       <aside id="workspace-nav" class="workspace" aria-label="Workspace">
         <div class="brand">
           <div class="brand-dot" aria-hidden="true"></div>
           <div>
             <h1>Field People</h1>
-            <p data-i18n="subtitle">業務管理 + Element連携</p>
+            <p>People OS MVP</p>
           </div>
         </div>
 
         <section class="workspace-card">
-          <label for="role" data-i18n="roleLabel">現在ロール</label>
-          <select id="role">
-            <option value="admin">admin</option>
-            <option value="backoffice">backoffice</option>
-            <option value="member">member</option>
-            <option value="talent">talent</option>
-          </select>
+          <div><strong id="current-user-name">-</strong></div>
+          <div id="current-user-role" class="badge">-</div>
+          <div id="current-user-email" class="muted">-</div>
+          <button id="logout-btn" class="btn ghost" type="button">ログアウト</button>
         </section>
 
         <nav class="nav" aria-label="Navigation">
-          <button class="nav-item active" type="button" data-target="people-pane" data-i18n="navPeople">People</button>
-          <button class="nav-item" type="button" data-target="rooms-pane" data-i18n="navRooms">Rooms</button>
-          <button class="nav-item" type="button" data-target="contracts-pane" data-i18n="navContracts">Contracts</button>
-          <button class="nav-item" type="button" data-target="activity-pane" data-i18n="navActivity">Activity</button>
+          <button class="nav-item active" type="button" data-target="dashboard-pane">Dashboard</button>
+          <button class="nav-item" type="button" data-target="people-pane">People</button>
+          <button class="nav-item" type="button" data-target="projects-pane">Projects</button>
+          <button class="nav-item" type="button" data-target="rooms-pane">Rooms</button>
+          <button class="nav-item" type="button" data-target="contracts-pane">Contracts</button>
+          <button class="nav-item" type="button" data-target="invoices-pane">Invoices</button>
+          <button class="nav-item" type="button" data-target="settings-pane">Settings</button>
+          <button class="nav-item" type="button" data-target="activity-pane">Activity</button>
         </nav>
       </aside>
 
-      <section class="channel" aria-label="Channel">
+      <section class="channel" aria-label="Main">
         <header class="section-head main-head">
           <div class="head-left">
-            <button id="sidebar-toggle" class="btn icon-btn ghost" type="button" aria-controls="workspace-nav" aria-expanded="true" data-i18n="closeSidebar">サイドバーを閉じる</button>
-            <h2 data-i18n="peopleTitle">People</h2>
+            <button id="sidebar-toggle" class="btn icon-btn ghost" type="button" aria-controls="workspace-nav" aria-expanded="true">サイドバーを閉じる</button>
+            <h2 id="pane-title">Dashboard</h2>
           </div>
-          <button id="reload-people" class="btn ghost" data-i18n="reload">再読込</button>
+          <button id="global-reload" class="btn ghost" type="button">再読込</button>
         </header>
 
-        <section id="people-pane" class="pane is-visible">
+        <section id="dashboard-pane" class="pane is-visible">
+          <div id="dashboard-cards" class="cards" aria-live="polite"></div>
+        </section>
+
+        <section id="people-pane" class="pane">
           <form id="person-form" class="form" aria-label="Create Person Form">
             <div class="form-row">
-              <input name="name" data-i18n-placeholder="personName" required />
-              <input name="display_name" data-i18n-placeholder="personDisplayName" />
+              <div class="field"><label for="person-name">氏名</label><input id="person-name" name="name" required /></div>
+              <div class="field"><label for="person-display-name">表示名</label><input id="person-display-name" name="display_name" /></div>
             </div>
             <div class="form-row">
-              <input name="email" type="email" data-i18n-placeholder="personEmail" required />
-              <input name="skills" data-i18n-placeholder="personSkills" />
+              <div class="field"><label for="person-email">メールアドレス</label><input id="person-email" name="email" type="email" required /></div>
+              <div class="field"><label for="person-skills">スキル（カンマ区切り）</label><input id="person-skills" name="skills" /></div>
             </div>
-            <div class="form-row">
-              <select name="type" required>
-                <option value="employee">employee</option>
-                <option value="contractor">contractor</option>
-                <option value="partner">partner</option>
-              </select>
-              <select name="role" required>
-                <option value="talent">talent</option>
-                <option value="member">member</option>
-                <option value="backoffice">backoffice</option>
-                <option value="admin">admin</option>
-              </select>
-              <button type="submit" class="btn" data-i18n="createPerson">人材を追加</button>
+            <div class="form-row thirds">
+              <div class="field"><label for="person-type">種別</label><select id="person-type" name="type" required><option value="employee">employee</option><option value="contractor">contractor</option><option value="partner">partner</option></select></div>
+              <div class="field"><label for="person-role">ロール</label><select id="person-role" name="role" required><option value="talent">talent</option><option value="member">member</option><option value="backoffice">backoffice</option><option value="admin">admin</option></select></div>
+              <div class="field field-end"><button type="submit" class="btn">人材を追加</button></div>
             </div>
           </form>
-
           <ul id="people-list" class="stream" aria-live="polite"></ul>
         </section>
 
+        <section id="projects-pane" class="pane">
+          <form id="project-form" class="form" aria-label="Create Project Form">
+            <div class="form-row">
+              <div class="field"><label for="project-name">プロジェクト名</label><input id="project-name" name="name" required /></div>
+              <div class="field"><label for="project-description">説明</label><input id="project-description" name="description" /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="project-start">start_date</label><input id="project-start" name="start_date" type="date" /></div>
+              <div class="field"><label for="project-end">end_date</label><input id="project-end" name="end_date" type="date" /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="project-pm">pm(person_id)</label><input id="project-pm" name="pm" /></div>
+              <div class="field"><label for="project-members">member_person_ids（カンマ区切り）</label><input id="project-members" name="member_person_ids" /></div>
+            </div>
+            <button type="submit" class="btn">プロジェクトを作成</button>
+          </form>
+          <ul id="project-list" class="stream" aria-live="polite"></ul>
+        </section>
+
         <section id="rooms-pane" class="pane">
-          <header class="section-head nested">
-            <h2 data-i18n="roomsTitle">Rooms</h2>
-            <button id="reload-rooms" class="btn ghost" data-i18n="reload">再読込</button>
-          </header>
           <form id="room-form" class="form" aria-label="Create Room Form">
             <div class="form-row">
-              <select name="type" required>
-                <option value="project_room">project_room</option>
-                <option value="person_room">person_room</option>
-                <option value="community_room">community_room</option>
-              </select>
-              <input name="room_id" data-i18n-placeholder="roomIdOptional" />
+              <div class="field"><label for="room-type">type</label><select id="room-type" name="type" required><option value="project_room">project_room</option><option value="person_room">person_room</option><option value="community_room">community_room</option></select></div>
+              <div class="field"><label for="room-id">room_id（任意）</label><input id="room-id" name="room_id" /></div>
             </div>
             <div class="form-row">
-              <input name="related_person_id" data-i18n-placeholder="relatedPersonId" />
-              <input name="related_project_id" data-i18n-placeholder="relatedProjectId" />
+              <div class="field"><label for="related-person-id">related_person_id</label><input id="related-person-id" name="related_person_id" /></div>
+              <div class="field"><label for="related-project-id">related_project_id</label><input id="related-project-id" name="related_project_id" /></div>
             </div>
             <div class="form-row">
-              <input name="member_user_ids" data-i18n-placeholder="roomMembers" />
-              <button type="submit" class="btn" data-i18n="createRoom">Roomを作成</button>
+              <div class="field"><label for="room-members">member_user_ids（カンマ区切り）</label><input id="room-members" name="member_user_ids" /></div>
+              <div class="field field-end"><button type="submit" class="btn">Roomを作成</button></div>
+            </div>
+          </form>
+          <ul id="room-list" class="stream" aria-live="polite"></ul>
+        </section>
+
+        <section id="contracts-pane" class="pane">
+          <form id="contract-form" class="form" aria-label="Create Contract Form">
+            <div class="form-row">
+              <div class="field"><label for="contract-person-id">person_id</label><input id="contract-person-id" name="person_id" required /></div>
+              <div class="field"><label for="contract-type">contract_type</label><input id="contract-type" name="contract_type" required /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="contract-rate">rate</label><input id="contract-rate" name="rate" type="number" step="0.01" required /></div>
+              <div class="field"><label for="contract-currency">currency</label><input id="contract-currency" name="currency" value="JPY" required /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="contract-start">start_date</label><input id="contract-start" name="start_date" type="date" required /></div>
+              <div class="field"><label for="contract-end">end_date</label><input id="contract-end" name="end_date" type="date" required /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="contract-terms">payment_terms</label><input id="contract-terms" name="payment_terms" /></div>
+              <div class="field"><label for="contract-doc">document_url</label><input id="contract-doc" name="document_url" /></div>
+            </div>
+            <button type="submit" class="btn">契約を追加</button>
+          </form>
+          <ul id="contract-list" class="stream" aria-live="polite"></ul>
+        </section>
+
+        <section id="invoices-pane" class="pane">
+          <form id="invoice-form" class="form" aria-label="Create Invoice Form">
+            <div class="form-row">
+              <div class="field"><label for="invoice-person-id">person_id</label><input id="invoice-person-id" name="person_id" required /></div>
+              <div class="field"><label for="invoice-period">period (YYYY-MM)</label><input id="invoice-period" name="period" placeholder="2026-03" required /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="invoice-amount">amount</label><input id="invoice-amount" name="amount" type="number" step="0.01" required /></div>
+              <div class="field"><label for="invoice-currency">currency</label><input id="invoice-currency" name="currency" value="JPY" required /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="invoice-file-url">file_url</label><input id="invoice-file-url" name="file_url" /></div>
+              <div class="field field-end"><button type="submit" class="btn">請求を提出</button></div>
+            </div>
+          </form>
+          <ul id="invoice-list" class="stream" aria-live="polite"></ul>
+        </section>
+
+        <section id="settings-pane" class="pane">
+          <form id="profile-form" class="form" aria-label="Profile Settings Form">
+            <h3>プロフィール設定</h3>
+            <div class="form-row">
+              <div class="field"><label for="settings-display-name">display_name</label><input id="settings-display-name" name="display_name" /></div>
+              <div class="field"><label for="settings-timezone">timezone</label><input id="settings-timezone" name="timezone" /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="settings-locale">locale</label><input id="settings-locale" name="locale" /></div>
+              <div class="field field-end"><button type="submit" class="btn">プロフィール更新</button></div>
             </div>
           </form>
 
-          <ul id="room-list" class="stream" aria-live="polite"></ul>
+          <form id="notify-form" class="form" aria-label="Notification Settings Form">
+            <h3>通知設定</h3>
+            <div class="check-row">
+              <label><input id="notify-email" name="notify_email" type="checkbox" /> Email通知</label>
+              <label><input id="notify-matrix" name="notify_matrix" type="checkbox" /> Matrix通知</label>
+            </div>
+            <button type="submit" class="btn">通知設定を更新</button>
+          </form>
+
+          <form id="password-form" class="form" aria-label="Password Reset Form">
+            <h3>パスワード変更</h3>
+            <div class="form-row">
+              <div class="field"><label for="old-password">old_password</label><input id="old-password" name="old_password" type="password" required /></div>
+              <div class="field"><label for="new-password">new_password</label><input id="new-password" name="new_password" type="password" required /></div>
+            </div>
+            <button type="submit" class="btn">パスワード変更</button>
+          </form>
+
+          <form id="invite-form" class="form" aria-label="Invite User Form">
+            <h3>ユーザー招待（Admin/BackOffice）</h3>
+            <div class="form-row">
+              <div class="field"><label for="invite-name">name</label><input id="invite-name" name="name" /></div>
+              <div class="field"><label for="invite-email">email</label><input id="invite-email" name="email" type="email" /></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="invite-role">role</label><select id="invite-role" name="role"><option value="member">member</option><option value="talent">talent</option><option value="backoffice">backoffice</option><option value="admin">admin</option></select></div>
+              <div class="field"><label for="invite-person-id">person_id（任意）</label><input id="invite-person-id" name="person_id" /></div>
+            </div>
+            <button type="submit" class="btn">招待作成</button>
+            <div id="invite-result" class="muted"></div>
+          </form>
         </section>
 
         <section id="activity-pane" class="pane">
           <div id="log" class="activity" aria-live="polite"></div>
         </section>
-
-        <section id="contracts-pane" class="pane">
-          <header class="section-head nested">
-            <h2 data-i18n="contractsTitle">Contracts</h2>
-            <button id="reload-contracts" class="btn ghost" data-i18n="reload">再読込</button>
-          </header>
-          <form id="contract-form" class="form" aria-label="Create Contract Form">
-            <div class="form-row">
-              <input name="person_id" data-i18n-placeholder="contractPersonId" required />
-              <input name="contract_type" data-i18n-placeholder="contractType" required />
-            </div>
-            <div class="form-row">
-              <input name="rate" type="number" step="0.01" data-i18n-placeholder="contractRate" required />
-              <input name="currency" data-i18n-placeholder="contractCurrency" required />
-            </div>
-            <div class="form-row">
-              <input name="start_date" type="date" data-i18n-placeholder="contractStartDate" required />
-              <input name="end_date" type="date" data-i18n-placeholder="contractEndDate" required />
-            </div>
-            <div class="form-row">
-              <input name="payment_terms" data-i18n-placeholder="contractPaymentTerms" />
-              <input name="document_url" data-i18n-placeholder="contractDocumentUrl" />
-              <button type="submit" class="btn" data-i18n="createContract">契約を追加</button>
-            </div>
-          </form>
-
-          <ul id="contract-list" class="stream" aria-live="polite"></ul>
-        </section>
       </section>
 
       <aside class="detail" aria-label="Detail">
-        <h3 data-i18n="detailTitle">Detail</h3>
-        <p data-i18n="detailBody">People / Rooms の選択項目を将来ここに表示します。</p>
-        <div class="note" data-i18n="i18nNote">日本語完全対応は次フェーズで辞書を拡張して対応予定です。</div>
+        <h3>Detail</h3>
+        <p>選択したデータの詳細確認エリア（MVP版）</p>
+        <div class="note">認証済みロールに応じて作成フォームの可否が変わります。</div>
       </aside>
       <button id="sidebar-backdrop" class="sidebar-backdrop" type="button" aria-label="Close sidebar"></button>
-
-      <div id="app-modal" class="modal-layer" hidden>
-        <div class="modal-backdrop" data-close-modal="true"></div>
-        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-body">
-          <header class="modal-head">
-            <h3 id="modal-title">確認</h3>
-            <button id="modal-close" class="btn ghost modal-close" type="button" data-close-modal="true" aria-label="Close dialog">×</button>
-          </header>
-          <div id="modal-body" class="modal-body"></div>
-          <div id="modal-actions" class="modal-actions"></div>
-        </section>
-      </div>
     </main>
 
     <script src="/app.js" type="module"></script>

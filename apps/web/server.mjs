@@ -2,16 +2,22 @@ import http from 'http';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, 'public');
 
 const PORT = Number(process.env.PORT || 3001);
+const DAY = 24 * 60 * 60 * 1000;
 
-const people = [];
-const rooms = [];
-const contracts = [];
+function nowISO() {
+  return new Date().toISOString();
+}
+
+function daysFromNow(days) {
+  return new Date(Date.now() + days * DAY).toISOString().slice(0, 10);
+}
 
 function json(res, status, body) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
@@ -56,18 +62,324 @@ function makeID(prefix) {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 }
 
-function requireRole(req, allowed) {
-  const role = String(req.headers['x-role'] || '').toLowerCase().trim();
-  if (!role) return { ok: false, code: 401, message: 'missing x-role header' };
-  if (!allowed.includes(role)) return { ok: false, code: 403, message: 'forbidden' };
-  return { ok: true, role };
-}
-
 function roomLinks(roomID) {
   const escaped = encodeURIComponent(roomID);
   return {
     element_web: `https://app.element.io/#/room/${escaped}`,
     element_mobile: `element://room/${escaped}`
+  };
+}
+
+function sanitizeUser(user) {
+  return {
+    user_id: user.user_id,
+    email: user.email,
+    role: user.role,
+    name: user.name,
+    display_name: user.display_name,
+    person_id: user.person_id,
+    locale: user.locale,
+    timezone: user.timezone,
+    notify_email: user.notify_email,
+    notify_matrix: user.notify_matrix,
+    created_at: user.created_at,
+    updated_at: user.updated_at
+  };
+}
+
+const people = [
+  {
+    person_id: 'person-admin-1',
+    name: 'Admin User',
+    display_name: 'Admin',
+    email: 'admin@field.local',
+    type: 'employee',
+    role: 'admin',
+    skills: ['ops', 'governance'],
+    availability: 'full',
+    status: 'active',
+    created_at: nowISO(),
+    updated_at: nowISO()
+  },
+  {
+    person_id: 'person-backoffice-1',
+    name: 'Backoffice User',
+    display_name: 'BO',
+    email: 'backoffice@field.local',
+    type: 'employee',
+    role: 'backoffice',
+    skills: ['invoice', 'finance'],
+    availability: 'full',
+    status: 'active',
+    created_at: nowISO(),
+    updated_at: nowISO()
+  },
+  {
+    person_id: 'person-member-1',
+    name: 'Member User',
+    display_name: 'Member',
+    email: 'member@field.local',
+    type: 'employee',
+    role: 'member',
+    skills: ['project'],
+    availability: 'full',
+    status: 'active',
+    created_at: nowISO(),
+    updated_at: nowISO()
+  },
+  {
+    person_id: 'person-talent-1',
+    name: 'Talent User',
+    display_name: 'Talent',
+    email: 'talent@field.local',
+    type: 'contractor',
+    role: 'talent',
+    skills: ['react', 'typescript'],
+    availability: 'part',
+    status: 'active',
+    created_at: nowISO(),
+    updated_at: nowISO()
+  }
+];
+
+const users = [
+  {
+    user_id: 'user-admin-1',
+    email: 'admin@field.local',
+    password: 'admin123',
+    role: 'admin',
+    name: 'Admin User',
+    display_name: 'Admin',
+    person_id: 'person-admin-1',
+    locale: 'ja',
+    timezone: 'Asia/Tokyo',
+    notify_email: true,
+    notify_matrix: true,
+    created_at: nowISO(),
+    updated_at: nowISO()
+  },
+  {
+    user_id: 'user-backoffice-1',
+    email: 'backoffice@field.local',
+    password: 'backoffice123',
+    role: 'backoffice',
+    name: 'Backoffice User',
+    display_name: 'BO',
+    person_id: 'person-backoffice-1',
+    locale: 'ja',
+    timezone: 'Asia/Tokyo',
+    notify_email: true,
+    notify_matrix: false,
+    created_at: nowISO(),
+    updated_at: nowISO()
+  },
+  {
+    user_id: 'user-member-1',
+    email: 'member@field.local',
+    password: 'member123',
+    role: 'member',
+    name: 'Member User',
+    display_name: 'Member',
+    person_id: 'person-member-1',
+    locale: 'ja',
+    timezone: 'Asia/Tokyo',
+    notify_email: true,
+    notify_matrix: true,
+    created_at: nowISO(),
+    updated_at: nowISO()
+  },
+  {
+    user_id: 'user-talent-1',
+    email: 'talent@field.local',
+    password: 'talent123',
+    role: 'talent',
+    name: 'Talent User',
+    display_name: 'Talent',
+    person_id: 'person-talent-1',
+    locale: 'ja',
+    timezone: 'Asia/Tokyo',
+    notify_email: false,
+    notify_matrix: true,
+    created_at: nowISO(),
+    updated_at: nowISO()
+  }
+];
+
+const projects = [
+  {
+    project_id: 'project-1',
+    name: 'MVP Build',
+    description: 'Field People MVP project',
+    status: 'active',
+    start_date: daysFromNow(-15),
+    end_date: daysFromNow(45),
+    pm: 'person-member-1',
+    member_person_ids: ['person-member-1', 'person-talent-1'],
+    created_at: nowISO(),
+    updated_at: nowISO()
+  }
+];
+
+const rooms = [
+  {
+    room_id: '!project-1:fieldpeople.local',
+    type: 'project_room',
+    related_person_id: '',
+    related_project_id: 'project-1',
+    member_user_ids: ['user-member-1', 'user-talent-1'],
+    created_at: nowISO(),
+    updated_at: nowISO()
+  }
+];
+
+const contracts = [
+  {
+    contract_id: 'contract-1',
+    person_id: 'person-talent-1',
+    contract_type: 'monthly',
+    rate: 450000,
+    currency: 'JPY',
+    start_date: daysFromNow(-20),
+    end_date: daysFromNow(20),
+    payment_terms: 'net30',
+    document_url: '',
+    status: 'active',
+    created_at: nowISO(),
+    updated_at: nowISO()
+  }
+];
+
+const invoices = [
+  {
+    invoice_id: 'invoice-1',
+    person_id: 'person-talent-1',
+    period: '2026-02',
+    amount: 450000,
+    currency: 'JPY',
+    status: 'submitted',
+    file_url: '',
+    submitted_at: nowISO(),
+    approved_at: null,
+    paid_at: null,
+    created_at: nowISO(),
+    updated_at: nowISO()
+  }
+];
+
+const tasks = [
+  {
+    task_id: 'task-1',
+    title: '請求書レビュー',
+    assignee: 'person-backoffice-1',
+    project_id: 'project-1',
+    due_date: daysFromNow(5),
+    status: 'open'
+  }
+];
+
+const sessions = new Map();
+
+const ACL = {
+  admin: ['*'],
+  backoffice: [
+    'dashboard:read',
+    'people:read',
+    'people:write',
+    'contracts:read',
+    'contracts:write',
+    'projects:read',
+    'rooms:read',
+    'rooms:write',
+    'invoices:read',
+    'invoices:write',
+    'settings:read',
+    'settings:write',
+    'auth:invite'
+  ],
+  member: [
+    'dashboard:read',
+    'people:read',
+    'contracts:read',
+    'projects:read',
+    'projects:write',
+    'rooms:read',
+    'rooms:write',
+    'invoices:read',
+    'settings:read',
+    'settings:write'
+  ],
+  talent: [
+    'dashboard:read',
+    'projects:read',
+    'rooms:read',
+    'contracts:read',
+    'invoices:read',
+    'invoices:write',
+    'settings:read',
+    'settings:write'
+  ]
+};
+
+function can(role, permission) {
+  const rules = ACL[role] || [];
+  return rules.includes('*') || rules.includes(permission);
+}
+
+function parseBearerToken(req) {
+  const auth = String(req.headers.authorization || '').trim();
+  if (!auth.startsWith('Bearer ')) return '';
+  return auth.slice(7).trim();
+}
+
+function getAuthUser(req) {
+  const token = parseBearerToken(req);
+  if (!token) return null;
+  const session = sessions.get(token);
+  if (!session) return null;
+  const user = users.find((u) => u.user_id === session.user_id);
+  if (!user) return null;
+  return { user, token };
+}
+
+function requirePermission(req, permission) {
+  const auth = getAuthUser(req);
+  if (!auth) return { ok: false, code: 401, message: 'unauthorized' };
+  if (!can(auth.user.role, permission)) return { ok: false, code: 403, message: 'forbidden' };
+  return { ok: true, user: auth.user, token: auth.token };
+}
+
+function assertTalentOwnership(user, personID) {
+  if (user.role !== 'talent') return true;
+  return user.person_id === personID;
+}
+
+function dashboardFor(user) {
+  const now = Date.now();
+  const end = now + 30 * DAY;
+  const personScoped = (personID) => (user.role === 'talent' ? personID === user.person_id : true);
+
+  const contractsExpiring = contracts.filter((c) => {
+    if (!personScoped(c.person_id)) return false;
+    if (c.status !== 'active') return false;
+    const ts = Date.parse(`${c.end_date}T00:00:00Z`);
+    return Number.isFinite(ts) && ts >= now && ts <= end;
+  }).length;
+
+  const submittedInvoices = invoices.filter((i) => personScoped(i.person_id) && i.status === 'submitted').length;
+  const unsubmittedInvoices = invoices.filter((i) => personScoped(i.person_id) && i.status === 'draft').length;
+
+  const dueTasks = tasks.filter((t) => {
+    if (t.status === 'done') return false;
+    if (user.role === 'talent' && t.assignee !== user.person_id) return false;
+    const ts = Date.parse(`${t.due_date}T00:00:00Z`);
+    return Number.isFinite(ts) && ts <= now + 7 * DAY;
+  }).length;
+
+  return {
+    contracts_expiring_30d: contractsExpiring,
+    invoices_unsubmitted: unsubmittedInvoices,
+    invoices_unapproved: submittedInvoices,
+    tasks_due_7d: dueTasks
   };
 }
 
@@ -98,11 +410,116 @@ const server = http.createServer(async (req, res) => {
     const { pathname, searchParams } = url;
 
     if (req.method === 'GET' && pathname === '/healthz') {
-      return json(res, 200, { status: 'ok', time: new Date().toISOString() });
+      return json(res, 200, { status: 'ok', time: nowISO() });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/v1/auth/login') {
+      const body = await parseBody(req);
+      const email = String(body.email || '').trim().toLowerCase();
+      const password = String(body.password || '');
+      const user = users.find((u) => u.email === email && u.password === password);
+      if (!user) return json(res, 401, { error: 'invalid credentials' });
+
+      const token = crypto.randomBytes(24).toString('hex');
+      sessions.set(token, { user_id: user.user_id, issued_at: nowISO() });
+      return json(res, 200, { token, user: sanitizeUser(user) });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/v1/auth/logout') {
+      const auth = getAuthUser(req);
+      if (!auth) return json(res, 200, { ok: true });
+      sessions.delete(auth.token);
+      return json(res, 200, { ok: true });
+    }
+
+    if (req.method === 'GET' && pathname === '/api/v1/auth/me') {
+      const auth = requirePermission(req, 'settings:read');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+      return json(res, 200, { user: sanitizeUser(auth.user) });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/v1/auth/invite') {
+      const auth = requirePermission(req, 'auth:invite');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const body = await parseBody(req);
+      const email = String(body.email || '').trim().toLowerCase();
+      const name = String(body.name || '').trim();
+      const role = String(body.role || '').trim().toLowerCase();
+      const personID = String(body.person_id || '').trim();
+
+      if (!email || !name || !role) return json(res, 400, { error: 'email,name,role are required' });
+      if (!['admin', 'backoffice', 'member', 'talent'].includes(role)) return json(res, 400, { error: 'invalid role' });
+      if (users.some((u) => u.email === email)) return json(res, 400, { error: 'email already exists' });
+
+      const tempPassword = crypto.randomBytes(6).toString('hex');
+      const now = nowISO();
+      const created = {
+        user_id: makeID('user'),
+        email,
+        password: tempPassword,
+        role,
+        name,
+        display_name: name,
+        person_id: personID,
+        locale: 'ja',
+        timezone: 'Asia/Tokyo',
+        notify_email: true,
+        notify_matrix: true,
+        created_at: now,
+        updated_at: now
+      };
+      users.push(created);
+      return json(res, 201, { user: sanitizeUser(created), temp_password: tempPassword });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/v1/auth/reset-password') {
+      const auth = requirePermission(req, 'settings:write');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const body = await parseBody(req);
+      const oldPassword = String(body.old_password || '');
+      const newPassword = String(body.new_password || '');
+      if (!oldPassword || !newPassword) return json(res, 400, { error: 'old_password,new_password are required' });
+      if (auth.user.password !== oldPassword) return json(res, 400, { error: 'old_password is incorrect' });
+      if (newPassword.length < 8) return json(res, 400, { error: 'new_password must be at least 8 chars' });
+
+      auth.user.password = newPassword;
+      auth.user.updated_at = nowISO();
+      return json(res, 200, { ok: true });
+    }
+
+    if (req.method === 'GET' && pathname === '/api/v1/dashboard') {
+      const auth = requirePermission(req, 'dashboard:read');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+      return json(res, 200, dashboardFor(auth.user));
+    }
+
+    if (req.method === 'PATCH' && pathname === '/api/v1/settings/profile') {
+      const auth = requirePermission(req, 'settings:write');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const body = await parseBody(req);
+      auth.user.display_name = String(body.display_name || '').trim() || auth.user.display_name;
+      auth.user.timezone = String(body.timezone || '').trim() || auth.user.timezone;
+      auth.user.locale = String(body.locale || '').trim() || auth.user.locale;
+      auth.user.updated_at = nowISO();
+      return json(res, 200, { user: sanitizeUser(auth.user) });
+    }
+
+    if (req.method === 'PATCH' && pathname === '/api/v1/settings/notifications') {
+      const auth = requirePermission(req, 'settings:write');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const body = await parseBody(req);
+      auth.user.notify_email = Boolean(body.notify_email);
+      auth.user.notify_matrix = Boolean(body.notify_matrix);
+      auth.user.updated_at = nowISO();
+      return json(res, 200, { user: sanitizeUser(auth.user) });
     }
 
     if (req.method === 'GET' && pathname === '/api/v1/people') {
-      const auth = requireRole(req, ['admin', 'backoffice', 'member']);
+      const auth = requirePermission(req, 'people:read');
       if (!auth.ok) return json(res, auth.code, { error: auth.message });
 
       const q = String(searchParams.get('q') || '').toLowerCase();
@@ -123,7 +540,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && pathname === '/api/v1/people') {
-      const auth = requireRole(req, ['admin', 'backoffice']);
+      const auth = requirePermission(req, 'people:write');
       if (!auth.ok) return json(res, auth.code, { error: auth.message });
 
       const body = await parseBody(req);
@@ -144,7 +561,7 @@ const server = http.createServer(async (req, res) => {
         return json(res, 400, { error: 'role must be admin|backoffice|member|talent' });
       }
 
-      const now = new Date().toISOString();
+      const now = nowISO();
       const person = {
         person_id: makeID('person'),
         name,
@@ -153,6 +570,7 @@ const server = http.createServer(async (req, res) => {
         type,
         role,
         skills,
+        availability: 'unknown',
         status: 'active',
         created_at: now,
         updated_at: now
@@ -161,17 +579,63 @@ const server = http.createServer(async (req, res) => {
       return json(res, 201, person);
     }
 
-    if (req.method === 'GET' && pathname === '/api/v1/rooms') {
-      const auth = requireRole(req, ['admin', 'backoffice', 'member', 'talent']);
+    if (req.method === 'GET' && pathname === '/api/v1/projects') {
+      const auth = requirePermission(req, 'projects:read');
       if (!auth.ok) return json(res, auth.code, { error: auth.message });
 
-      const type = String(searchParams.get('type') || '').trim();
-      const items = type ? rooms.filter((r) => r.type === type) : rooms;
+      const items = auth.user.role === 'talent'
+        ? projects.filter((p) => p.member_person_ids.includes(auth.user.person_id))
+        : projects;
       return json(res, 200, { items });
     }
 
+    if (req.method === 'POST' && pathname === '/api/v1/projects') {
+      const auth = requirePermission(req, 'projects:write');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const body = await parseBody(req);
+      const name = String(body.name || '').trim();
+      const description = String(body.description || '').trim();
+      const startDate = String(body.start_date || '').trim();
+      const endDate = String(body.end_date || '').trim();
+      const pm = String(body.pm || '').trim();
+      const members = dedupe(body.member_person_ids);
+      if (!name) return json(res, 400, { error: 'name is required' });
+
+      const now = nowISO();
+      const project = {
+        project_id: makeID('project'),
+        name,
+        description,
+        status: 'active',
+        start_date: startDate,
+        end_date: endDate,
+        pm,
+        member_person_ids: members,
+        created_at: now,
+        updated_at: now
+      };
+      projects.push(project);
+      return json(res, 201, project);
+    }
+
+    const projectMemberMatch = pathname.match(/^\/api\/v1\/projects\/([^/]+)\/members$/);
+    if (req.method === 'POST' && projectMemberMatch) {
+      const auth = requirePermission(req, 'projects:write');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const projectID = decodeURIComponent(projectMemberMatch[1]);
+      const project = projects.find((p) => p.project_id === projectID);
+      if (!project) return json(res, 404, { error: 'project not found' });
+
+      const body = await parseBody(req);
+      project.member_person_ids = dedupe([...(project.member_person_ids || []), ...(Array.isArray(body.member_person_ids) ? body.member_person_ids : [])]);
+      project.updated_at = nowISO();
+      return json(res, 200, project);
+    }
+
     if (req.method === 'GET' && pathname === '/api/v1/contracts') {
-      const auth = requireRole(req, ['admin', 'backoffice', 'member', 'talent']);
+      const auth = requirePermission(req, 'contracts:read');
       if (!auth.ok) return json(res, auth.code, { error: auth.message });
 
       const personID = String(searchParams.get('person_id') || '').trim();
@@ -179,6 +643,7 @@ const server = http.createServer(async (req, res) => {
       const q = String(searchParams.get('q') || '').trim().toLowerCase();
 
       const items = contracts.filter((c) => {
+        if (auth.user.role === 'talent' && c.person_id !== auth.user.person_id) return false;
         if (personID && c.person_id !== personID) return false;
         if (status && c.status !== status) return false;
         if (!q) return true;
@@ -189,7 +654,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && pathname === '/api/v1/contracts') {
-      const auth = requireRole(req, ['admin', 'backoffice']);
+      const auth = requirePermission(req, 'contracts:write');
       if (!auth.ok) return json(res, auth.code, { error: auth.message });
 
       const body = await parseBody(req);
@@ -208,7 +673,7 @@ const server = http.createServer(async (req, res) => {
       const personExists = people.some((p) => p.person_id === personID);
       if (!personExists) return json(res, 400, { error: 'person_id not found' });
 
-      const now = new Date().toISOString();
+      const now = nowISO();
       const contract = {
         contract_id: makeID('contract'),
         person_id: personID,
@@ -227,8 +692,37 @@ const server = http.createServer(async (req, res) => {
       return json(res, 201, contract);
     }
 
+    const contractStatusMatch = pathname.match(/^\/api\/v1\/contracts\/([^/]+)\/status$/);
+    if (req.method === 'PATCH' && contractStatusMatch) {
+      const auth = requirePermission(req, 'contracts:write');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const contractID = decodeURIComponent(contractStatusMatch[1]);
+      const contract = contracts.find((c) => c.contract_id === contractID);
+      if (!contract) return json(res, 404, { error: 'contract not found' });
+
+      const body = await parseBody(req);
+      const next = String(body.status || '').trim().toLowerCase();
+      if (!['active', 'ended', 'cancelled'].includes(next)) {
+        return json(res, 400, { error: 'status must be active|ended|cancelled' });
+      }
+
+      contract.status = next;
+      contract.updated_at = nowISO();
+      return json(res, 200, contract);
+    }
+
+    if (req.method === 'GET' && pathname === '/api/v1/rooms') {
+      const auth = requirePermission(req, 'rooms:read');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const type = String(searchParams.get('type') || '').trim();
+      const items = type ? rooms.filter((r) => r.type === type) : rooms;
+      return json(res, 200, { items });
+    }
+
     if (req.method === 'POST' && pathname === '/api/v1/rooms') {
-      const auth = requireRole(req, ['admin', 'backoffice', 'member']);
+      const auth = requirePermission(req, 'rooms:write');
       if (!auth.ok) return json(res, auth.code, { error: auth.message });
 
       const body = await parseBody(req);
@@ -249,7 +743,7 @@ const server = http.createServer(async (req, res) => {
         return json(res, 400, { error: 'related_project_id is required for project_room' });
       }
 
-      const now = new Date().toISOString();
+      const now = nowISO();
       const room = {
         room_id: roomID,
         type,
@@ -265,7 +759,7 @@ const server = http.createServer(async (req, res) => {
 
     const syncMatch = pathname.match(/^\/api\/v1\/rooms\/([^/]+)\/members\/sync$/);
     if (req.method === 'POST' && syncMatch) {
-      const auth = requireRole(req, ['admin', 'backoffice', 'member']);
+      const auth = requirePermission(req, 'rooms:write');
       if (!auth.ok) return json(res, auth.code, { error: auth.message });
 
       const roomID = decodeURIComponent(syncMatch[1]);
@@ -274,13 +768,13 @@ const server = http.createServer(async (req, res) => {
 
       const body = await parseBody(req);
       room.member_user_ids = dedupe(body.member_user_ids);
-      room.updated_at = new Date().toISOString();
+      room.updated_at = nowISO();
       return json(res, 200, room);
     }
 
     const linkMatch = pathname.match(/^\/api\/v1\/rooms\/([^/]+)\/links$/);
     if (req.method === 'GET' && linkMatch) {
-      const auth = requireRole(req, ['admin', 'backoffice', 'member', 'talent']);
+      const auth = requirePermission(req, 'rooms:read');
       if (!auth.ok) return json(res, auth.code, { error: auth.message });
 
       const roomID = decodeURIComponent(linkMatch[1]);
@@ -290,24 +784,77 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { room_id: roomID, links: roomLinks(roomID) });
     }
 
-    const contractStatusMatch = pathname.match(/^\/api\/v1\/contracts\/([^/]+)\/status$/);
-    if (req.method === 'PATCH' && contractStatusMatch) {
-      const auth = requireRole(req, ['admin', 'backoffice']);
+    if (req.method === 'GET' && pathname === '/api/v1/invoices') {
+      const auth = requirePermission(req, 'invoices:read');
       if (!auth.ok) return json(res, auth.code, { error: auth.message });
 
-      const contractID = decodeURIComponent(contractStatusMatch[1]);
-      const contract = contracts.find((c) => c.contract_id === contractID);
-      if (!contract) return json(res, 404, { error: 'contract not found' });
+      const status = String(searchParams.get('status') || '').trim().toLowerCase();
+      const items = invoices.filter((i) => {
+        if (auth.user.role === 'talent' && i.person_id !== auth.user.person_id) return false;
+        if (status && i.status !== status) return false;
+        return true;
+      });
+      return json(res, 200, { items });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/v1/invoices') {
+      const auth = requirePermission(req, 'invoices:write');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const body = await parseBody(req);
+      const personID = String(body.person_id || '').trim();
+      if (!assertTalentOwnership(auth.user, personID)) {
+        return json(res, 403, { error: 'talent can only submit own invoice' });
+      }
+
+      const period = String(body.period || '').trim();
+      const amount = Number(body.amount);
+      const currency = String(body.currency || '').trim().toUpperCase() || 'JPY';
+      const fileURL = String(body.file_url || '').trim();
+
+      if (!personID || !period || !Number.isFinite(amount)) {
+        return json(res, 400, { error: 'person_id,period,amount are required' });
+      }
+
+      const now = nowISO();
+      const invoice = {
+        invoice_id: makeID('invoice'),
+        person_id: personID,
+        period,
+        amount,
+        currency,
+        status: 'submitted',
+        file_url: fileURL,
+        submitted_at: now,
+        approved_at: null,
+        paid_at: null,
+        created_at: now,
+        updated_at: now
+      };
+      invoices.push(invoice);
+      return json(res, 201, invoice);
+    }
+
+    const invoiceStatusMatch = pathname.match(/^\/api\/v1\/invoices\/([^/]+)\/status$/);
+    if (req.method === 'PATCH' && invoiceStatusMatch) {
+      const auth = requirePermission(req, 'invoices:write');
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const invoiceID = decodeURIComponent(invoiceStatusMatch[1]);
+      const invoice = invoices.find((i) => i.invoice_id === invoiceID);
+      if (!invoice) return json(res, 404, { error: 'invoice not found' });
 
       const body = await parseBody(req);
       const next = String(body.status || '').trim().toLowerCase();
-      if (!['active', 'ended', 'cancelled'].includes(next)) {
-        return json(res, 400, { error: 'status must be active|ended|cancelled' });
+      if (!['draft', 'submitted', 'approved', 'paid'].includes(next)) {
+        return json(res, 400, { error: 'status must be draft|submitted|approved|paid' });
       }
 
-      contract.status = next;
-      contract.updated_at = new Date().toISOString();
-      return json(res, 200, contract);
+      invoice.status = next;
+      if (next === 'approved') invoice.approved_at = nowISO();
+      if (next === 'paid') invoice.paid_at = nowISO();
+      invoice.updated_at = nowISO();
+      return json(res, 200, invoice);
     }
 
     return serveStatic(req, res, pathname);
@@ -318,4 +865,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Field People demo app running on http://localhost:${PORT}`);
+  console.log('Demo users: admin@field.local/admin123, backoffice@field.local/backoffice123, member@field.local/member123, talent@field.local/talent123');
 });
