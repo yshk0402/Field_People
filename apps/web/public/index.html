@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Field People Demo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@primer/css@21.17.9/dist/primer.css" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
+  <body class="fp-ui">
     <main id="auth-view" class="auth-shell" aria-labelledby="login-title">
       <section class="auth-card" aria-live="polite">
         <h1 id="login-title">Field People Login</h1>
@@ -71,104 +72,164 @@
         </header>
 
         <section id="dashboard-pane" class="pane is-visible">
-          <div id="dashboard-cards" class="cards" aria-live="polite"></div>
+          <div id="dashboard-cards" class="stats-board" aria-live="polite"></div>
         </section>
 
         <section id="people-pane" class="pane">
-          <form id="person-form" class="form" aria-label="Create Person Form">
-            <div class="form-row">
-              <div class="field"><label for="person-name">氏名</label><input id="person-name" name="name" required /></div>
-              <div class="field"><label for="person-display-name">表示名</label><input id="person-display-name" name="display_name" /></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="person-email">メールアドレス</label><input id="person-email" name="email" type="email" required /></div>
-              <div class="field"><label for="person-skills">スキル（カンマ区切り）</label><input id="person-skills" name="skills" /></div>
-            </div>
-            <div class="form-row thirds">
-              <div class="field"><label for="person-type">種別</label><select id="person-type" name="type" required><option value="employee">employee</option><option value="contractor">contractor</option><option value="partner">partner</option></select></div>
-              <div class="field"><label for="person-role">ロール</label><select id="person-role" name="role" required><option value="talent">talent</option><option value="member">member</option><option value="backoffice">backoffice</option><option value="admin">admin</option></select></div>
-              <div class="field field-end"><button type="submit" class="btn">人材を追加</button></div>
-            </div>
-          </form>
+          <div class="pane-toolbar">
+            <p>People一覧</p>
+            <button id="open-person-modal" class="btn secondary" type="button" data-form-trigger="person">人材を追加</button>
+          </div>
           <ul id="people-list" class="stream" aria-live="polite"></ul>
+          <dialog id="person-modal" class="entry-modal">
+            <article>
+              <header>
+                <button type="button" class="close" data-close-modal="person" aria-label="Close"></button>
+                <h3>人材を追加</h3>
+              </header>
+              <form id="person-form" class="form" aria-label="Create Person Form">
+                <div class="form-row">
+                  <div class="field"><label for="person-name">氏名</label><input id="person-name" name="name" required /></div>
+                  <div class="field"><label for="person-display-name">表示名</label><input id="person-display-name" name="display_name" /></div>
+                </div>
+                <div class="form-row">
+                  <div class="field"><label for="person-email">メールアドレス</label><input id="person-email" name="email" type="email" required /></div>
+                  <div class="field"><label for="person-skills">スキル（カンマ区切り）</label><input id="person-skills" name="skills" /></div>
+                </div>
+                <div class="form-row thirds">
+                  <div class="field"><label for="person-type">種別</label><select id="person-type" name="type" required><option value="employee">employee</option><option value="contractor">contractor</option><option value="partner">partner</option></select></div>
+                  <div class="field"><label for="person-role">ロール</label><select id="person-role" name="role" required><option value="talent">talent</option><option value="member">member</option><option value="backoffice">backoffice</option><option value="admin">admin</option></select></div>
+                  <div class="field field-end"><button type="submit" class="btn">保存</button></div>
+                </div>
+              </form>
+            </article>
+          </dialog>
         </section>
 
         <section id="projects-pane" class="pane">
-          <form id="project-form" class="form" aria-label="Create Project Form">
-            <div class="form-row">
-              <div class="field"><label for="project-name">プロジェクト名</label><input id="project-name" name="name" required /></div>
-              <div class="field"><label for="project-description">説明</label><input id="project-description" name="description" /></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="project-start">start_date</label><input id="project-start" name="start_date" type="date" /></div>
-              <div class="field"><label for="project-end">end_date</label><input id="project-end" name="end_date" type="date" /></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="project-pm">pm(person_id)</label><input id="project-pm" name="pm" /></div>
-              <div class="field"><label for="project-members">member_person_ids（カンマ区切り）</label><input id="project-members" name="member_person_ids" /></div>
-            </div>
-            <button type="submit" class="btn">プロジェクトを作成</button>
-          </form>
+          <div class="pane-toolbar">
+            <p>Project一覧</p>
+            <button id="open-project-modal" class="btn secondary" type="button" data-form-trigger="project">プロジェクト作成</button>
+          </div>
           <ul id="project-list" class="stream" aria-live="polite"></ul>
+          <dialog id="project-modal" class="entry-modal">
+            <article>
+              <header>
+                <button type="button" class="close" data-close-modal="project" aria-label="Close"></button>
+                <h3>プロジェクト作成</h3>
+              </header>
+              <form id="project-form" class="form" aria-label="Create Project Form">
+                <div class="form-row">
+                  <div class="field"><label for="project-name">プロジェクト名</label><input id="project-name" name="name" required /></div>
+                  <div class="field"><label for="project-description">説明</label><input id="project-description" name="description" /></div>
+                </div>
+                <div class="form-row">
+                  <div class="field"><label for="project-start">start_date</label><input id="project-start" name="start_date" type="date" /></div>
+                  <div class="field"><label for="project-end">end_date</label><input id="project-end" name="end_date" type="date" /></div>
+                </div>
+                <div class="form-row">
+                  <div class="field"><label for="project-pm">pm(person_id)</label><input id="project-pm" name="pm" /></div>
+                  <div class="field"><label for="project-members">member_person_ids（カンマ区切り）</label><input id="project-members" name="member_person_ids" /></div>
+                </div>
+                <button type="submit" class="btn">保存</button>
+              </form>
+            </article>
+          </dialog>
         </section>
 
         <section id="rooms-pane" class="pane">
-          <form id="room-form" class="form" aria-label="Create Room Form">
-            <div class="form-row">
-              <div class="field"><label for="room-type">type</label><select id="room-type" name="type" required><option value="project_room">project_room</option><option value="person_room">person_room</option><option value="community_room">community_room</option></select></div>
-              <div class="field"><label for="room-id">room_id（任意）</label><input id="room-id" name="room_id" /></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="related-person-id">related_person_id</label><input id="related-person-id" name="related_person_id" /></div>
-              <div class="field"><label for="related-project-id">related_project_id</label><input id="related-project-id" name="related_project_id" /></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="room-members">member_user_ids（カンマ区切り）</label><input id="room-members" name="member_user_ids" /></div>
-              <div class="field field-end"><button type="submit" class="btn">Roomを作成</button></div>
-            </div>
-          </form>
+          <div class="pane-toolbar">
+            <p>Room一覧</p>
+            <button id="open-room-modal" class="btn secondary" type="button" data-form-trigger="room">Room作成</button>
+          </div>
           <ul id="room-list" class="stream" aria-live="polite"></ul>
+          <dialog id="room-modal" class="entry-modal">
+            <article>
+              <header>
+                <button type="button" class="close" data-close-modal="room" aria-label="Close"></button>
+                <h3>Room作成</h3>
+              </header>
+              <form id="room-form" class="form" aria-label="Create Room Form">
+                <div class="form-row">
+                  <div class="field"><label for="room-type">type</label><select id="room-type" name="type" required><option value="project_room">project_room</option><option value="person_room">person_room</option><option value="community_room">community_room</option></select></div>
+                  <div class="field"><label for="room-id">room_id（任意）</label><input id="room-id" name="room_id" /></div>
+                </div>
+                <div class="form-row">
+                  <div class="field"><label for="related-person-id">related_person_id</label><input id="related-person-id" name="related_person_id" /></div>
+                  <div class="field"><label for="related-project-id">related_project_id</label><input id="related-project-id" name="related_project_id" /></div>
+                </div>
+                <div class="form-row">
+                  <div class="field"><label for="room-members">member_user_ids（カンマ区切り）</label><input id="room-members" name="member_user_ids" /></div>
+                  <div class="field field-end"><button type="submit" class="btn">保存</button></div>
+                </div>
+              </form>
+            </article>
+          </dialog>
         </section>
 
         <section id="contracts-pane" class="pane">
-          <form id="contract-form" class="form" aria-label="Create Contract Form">
-            <div class="form-row">
-              <div class="field"><label for="contract-person-id">person_id</label><input id="contract-person-id" name="person_id" required /></div>
-              <div class="field"><label for="contract-type">contract_type</label><input id="contract-type" name="contract_type" required /></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="contract-rate">rate</label><input id="contract-rate" name="rate" type="number" step="0.01" required /></div>
-              <div class="field"><label for="contract-currency">currency</label><input id="contract-currency" name="currency" value="JPY" required /></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="contract-start">start_date</label><input id="contract-start" name="start_date" type="date" required /></div>
-              <div class="field"><label for="contract-end">end_date</label><input id="contract-end" name="end_date" type="date" required /></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="contract-terms">payment_terms</label><input id="contract-terms" name="payment_terms" /></div>
-              <div class="field"><label for="contract-doc">document_url</label><input id="contract-doc" name="document_url" /></div>
-            </div>
-            <button type="submit" class="btn">契約を追加</button>
-          </form>
+          <div class="pane-toolbar">
+            <p>Contract一覧</p>
+            <button id="open-contract-modal" class="btn secondary" type="button" data-form-trigger="contract">契約追加</button>
+          </div>
           <ul id="contract-list" class="stream" aria-live="polite"></ul>
+          <dialog id="contract-modal" class="entry-modal">
+            <article>
+              <header>
+                <button type="button" class="close" data-close-modal="contract" aria-label="Close"></button>
+                <h3>契約を追加</h3>
+              </header>
+              <form id="contract-form" class="form" aria-label="Create Contract Form">
+                <div class="form-row">
+                  <div class="field"><label for="contract-person-id">person_id</label><input id="contract-person-id" name="person_id" required /></div>
+                  <div class="field"><label for="contract-type">contract_type</label><input id="contract-type" name="contract_type" required /></div>
+                </div>
+                <div class="form-row">
+                  <div class="field"><label for="contract-rate">rate</label><input id="contract-rate" name="rate" type="number" step="0.01" required /></div>
+                  <div class="field"><label for="contract-currency">currency</label><input id="contract-currency" name="currency" value="JPY" required /></div>
+                </div>
+                <div class="form-row">
+                  <div class="field"><label for="contract-start">start_date</label><input id="contract-start" name="start_date" type="date" required /></div>
+                  <div class="field"><label for="contract-end">end_date</label><input id="contract-end" name="end_date" type="date" required /></div>
+                </div>
+                <div class="form-row">
+                  <div class="field"><label for="contract-terms">payment_terms</label><input id="contract-terms" name="payment_terms" /></div>
+                  <div class="field"><label for="contract-doc">document_url</label><input id="contract-doc" name="document_url" /></div>
+                </div>
+                <button type="submit" class="btn">保存</button>
+              </form>
+            </article>
+          </dialog>
         </section>
 
         <section id="invoices-pane" class="pane">
-          <form id="invoice-form" class="form" aria-label="Create Invoice Form">
-            <div class="form-row">
-              <div class="field"><label for="invoice-person-id">person_id</label><input id="invoice-person-id" name="person_id" required /></div>
-              <div class="field"><label for="invoice-period">period (YYYY-MM)</label><input id="invoice-period" name="period" placeholder="2026-03" required /></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="invoice-amount">amount</label><input id="invoice-amount" name="amount" type="number" step="0.01" required /></div>
-              <div class="field"><label for="invoice-currency">currency</label><input id="invoice-currency" name="currency" value="JPY" required /></div>
-            </div>
-            <div class="form-row">
-              <div class="field"><label for="invoice-file-url">file_url</label><input id="invoice-file-url" name="file_url" /></div>
-              <div class="field field-end"><button type="submit" class="btn">請求を提出</button></div>
-            </div>
-          </form>
+          <div class="pane-toolbar">
+            <p>Invoice一覧</p>
+            <button id="open-invoice-modal" class="btn secondary" type="button" data-form-trigger="invoice">請求作成</button>
+          </div>
           <ul id="invoice-list" class="stream" aria-live="polite"></ul>
+          <dialog id="invoice-modal" class="entry-modal">
+            <article>
+              <header>
+                <button type="button" class="close" data-close-modal="invoice" aria-label="Close"></button>
+                <h3>請求を作成</h3>
+              </header>
+              <form id="invoice-form" class="form" aria-label="Create Invoice Form">
+                <div class="form-row">
+                  <div class="field"><label for="invoice-person-id">person_id</label><input id="invoice-person-id" name="person_id" required /></div>
+                  <div class="field"><label for="invoice-period">period (YYYY-MM)</label><input id="invoice-period" name="period" placeholder="2026-03" required /></div>
+                </div>
+                <div class="form-row">
+                  <div class="field"><label for="invoice-amount">amount</label><input id="invoice-amount" name="amount" type="number" step="0.01" required /></div>
+                  <div class="field"><label for="invoice-currency">currency</label><input id="invoice-currency" name="currency" value="JPY" required /></div>
+                </div>
+                <div class="form-row">
+                  <div class="field"><label for="invoice-file-url">file_url</label><input id="invoice-file-url" name="file_url" /></div>
+                  <div class="field field-end"><button type="submit" class="btn">保存</button></div>
+                </div>
+              </form>
+            </article>
+          </dialog>
         </section>
 
         <section id="settings-pane" class="pane">

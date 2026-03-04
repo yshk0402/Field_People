@@ -34,6 +34,15 @@ const forms = {
   password: document.getElementById('password-form'),
   invite: document.getElementById('invite-form')
 };
+const modalTriggers = Array.from(document.querySelectorAll('[data-form-trigger]'));
+const modalCloseButtons = Array.from(document.querySelectorAll('[data-close-modal]'));
+const entryModals = {
+  person: document.getElementById('person-modal'),
+  project: document.getElementById('project-modal'),
+  room: document.getElementById('room-modal'),
+  contract: document.getElementById('contract-modal'),
+  invoice: document.getElementById('invoice-modal')
+};
 
 const notifyEmailEl = document.getElementById('notify-email');
 const notifyMatrixEl = document.getElementById('notify-matrix');
@@ -118,15 +127,42 @@ function setFormState(form, enabled) {
   });
 }
 
+function setTriggerState(formKey, enabled) {
+  document.querySelectorAll(`[data-form-trigger="${formKey}"]`).forEach((trigger) => {
+    trigger.disabled = !enabled;
+  });
+}
+
 function applyRBAC() {
   const role = me?.role || 'talent';
   const caps = ACL[role] || ACL.talent;
   setFormState(forms.person, caps.person);
+  setTriggerState('person', caps.person);
   setFormState(forms.project, caps.project);
+  setTriggerState('project', caps.project);
   setFormState(forms.room, caps.room);
+  setTriggerState('room', caps.room);
   setFormState(forms.contract, caps.contract);
+  setTriggerState('contract', caps.contract);
   setFormState(forms.invoice, caps.invoice);
+  setTriggerState('invoice', caps.invoice);
   setFormState(forms.invite, caps.invite);
+}
+
+function openModal(kind) {
+  const modal = entryModals[kind];
+  if (!modal) return;
+  if (typeof modal.showModal === 'function') {
+    modal.showModal();
+  }
+}
+
+function closeModal(kind) {
+  const modal = entryModals[kind];
+  if (!modal) return;
+  if (modal.open) {
+    modal.close();
+  }
 }
 
 function activatePane(target) {
@@ -170,13 +206,15 @@ function collectCSV(value) {
 
 async function loadDashboard() {
   const data = await api('/api/v1/dashboard');
-  const cards = [
+  const stats = [
     ['契約更新(30日以内)', data.contracts_expiring_30d],
     ['未提出請求', data.invoices_unsubmitted],
     ['未承認請求', data.invoices_unapproved],
     ['期限タスク(7日以内)', data.tasks_due_7d]
   ];
-  dashboardCardsEl.innerHTML = cards.map(([k, v]) => `<article class="card"><h3>${escapeHTML(k)}</h3><div class="card-value">${escapeHTML(v)}</div></article>`).join('');
+  dashboardCardsEl.innerHTML = stats
+    .map(([k, v]) => `<div class="stat-row"><span class="stat-label">${escapeHTML(k)}</span><strong class="stat-value">${escapeHTML(v)}</strong></div>`)
+    .join('');
 }
 
 async function loadPeople() {
@@ -336,6 +374,7 @@ forms.person.addEventListener('submit', async (ev) => {
       })
     });
     forms.person.reset();
+    closeModal('person');
     await loadPeople();
     log('Peopleを追加しました');
   } catch (e) {
@@ -359,6 +398,7 @@ forms.project.addEventListener('submit', async (ev) => {
       })
     });
     forms.project.reset();
+    closeModal('project');
     await loadProjects();
     log('Projectを作成しました');
   } catch (e) {
@@ -381,6 +421,7 @@ forms.room.addEventListener('submit', async (ev) => {
       })
     });
     forms.room.reset();
+    closeModal('room');
     await loadRooms();
     log('Roomを作成しました');
   } catch (e) {
@@ -406,6 +447,7 @@ forms.contract.addEventListener('submit', async (ev) => {
       })
     });
     forms.contract.reset();
+    closeModal('contract');
     await loadContracts();
     await loadDashboard();
     log('Contractを作成しました');
@@ -429,6 +471,7 @@ forms.invoice.addEventListener('submit', async (ev) => {
       })
     });
     forms.invoice.reset();
+    closeModal('invoice');
     if (me?.person_id) document.getElementById('invoice-person-id').value = me.person_id;
     await loadInvoices();
     await loadDashboard();
@@ -549,6 +592,20 @@ navItems.forEach((btn) => {
   btn.addEventListener('click', () => {
     activatePane(btn.dataset.target);
     if (mobileQuery.matches) closeMobileSidebar();
+  });
+});
+
+modalTriggers.forEach((trigger) => {
+  trigger.addEventListener('click', () => {
+    const formKey = trigger.getAttribute('data-form-trigger');
+    openModal(formKey);
+  });
+});
+
+modalCloseButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const formKey = btn.getAttribute('data-close-modal');
+    closeModal(formKey);
   });
 });
 
