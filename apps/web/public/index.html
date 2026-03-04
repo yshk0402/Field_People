@@ -30,6 +30,7 @@
         <nav class="nav" aria-label="Navigation">
           <button class="nav-item active" type="button" data-target="people-pane" data-i18n="navPeople">People</button>
           <button class="nav-item" type="button" data-target="rooms-pane" data-i18n="navRooms">Rooms</button>
+          <button class="nav-item" type="button" data-target="contracts-pane" data-i18n="navContracts">Contracts</button>
           <button class="nav-item" type="button" data-target="activity-pane" data-i18n="navActivity">Activity</button>
         </nav>
       </aside>
@@ -101,6 +102,34 @@
 
         <section id="activity-pane" class="pane">
           <div id="log" class="activity" aria-live="polite"></div>
+        </section>
+
+        <section id="contracts-pane" class="pane">
+          <header class="section-head nested">
+            <h2 data-i18n="contractsTitle">Contracts</h2>
+            <button id="reload-contracts" class="btn ghost" data-i18n="reload">再読込</button>
+          </header>
+          <form id="contract-form" class="form" aria-label="Create Contract Form">
+            <div class="form-row">
+              <input name="person_id" data-i18n-placeholder="contractPersonId" required />
+              <input name="contract_type" data-i18n-placeholder="contractType" required />
+            </div>
+            <div class="form-row">
+              <input name="rate" type="number" step="0.01" data-i18n-placeholder="contractRate" required />
+              <input name="currency" data-i18n-placeholder="contractCurrency" required />
+            </div>
+            <div class="form-row">
+              <input name="start_date" type="date" data-i18n-placeholder="contractStartDate" required />
+              <input name="end_date" type="date" data-i18n-placeholder="contractEndDate" required />
+            </div>
+            <div class="form-row">
+              <input name="payment_terms" data-i18n-placeholder="contractPaymentTerms" />
+              <input name="document_url" data-i18n-placeholder="contractDocumentUrl" />
+              <button type="submit" class="btn" data-i18n="createContract">契約を追加</button>
+            </div>
+          </form>
+
+          <ul id="contract-list" class="stream" aria-live="polite"></ul>
         </section>
       </section>
 

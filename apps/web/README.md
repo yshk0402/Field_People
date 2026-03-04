@@ -29,6 +29,9 @@ Frontend sends:
 - `POST /api/v1/rooms`
 - `POST /api/v1/rooms/{roomID}/members/sync`
 - `GET /api/v1/rooms/{roomID}/links`
+- `GET /api/v1/contracts`
+- `POST /api/v1/contracts`
+- `PATCH /api/v1/contracts/{contractID}/status`
 
 ## Note
 

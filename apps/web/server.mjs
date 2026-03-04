@@ -11,6 +11,7 @@ const PORT = Number(process.env.PORT || 3001);
 
 const people = [];
 const rooms = [];
+const contracts = [];
 
 function json(res, status, body) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
@@ -169,6 +170,63 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { items });
     }
 
+    if (req.method === 'GET' && pathname === '/api/v1/contracts') {
+      const auth = requireRole(req, ['admin', 'backoffice', 'member', 'talent']);
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const personID = String(searchParams.get('person_id') || '').trim();
+      const status = String(searchParams.get('status') || '').trim().toLowerCase();
+      const q = String(searchParams.get('q') || '').trim().toLowerCase();
+
+      const items = contracts.filter((c) => {
+        if (personID && c.person_id !== personID) return false;
+        if (status && c.status !== status) return false;
+        if (!q) return true;
+        const hay = `${c.contract_type} ${c.currency} ${c.payment_terms || ''}`.toLowerCase();
+        return hay.includes(q);
+      });
+      return json(res, 200, { items });
+    }
+
+    if (req.method === 'POST' && pathname === '/api/v1/contracts') {
+      const auth = requireRole(req, ['admin', 'backoffice']);
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const body = await parseBody(req);
+      const personID = String(body.person_id || '').trim();
+      const contractType = String(body.contract_type || '').trim();
+      const rate = Number(body.rate);
+      const currency = String(body.currency || '').trim().toUpperCase();
+      const startDate = String(body.start_date || '').trim();
+      const endDate = String(body.end_date || '').trim();
+      const paymentTerms = String(body.payment_terms || '').trim();
+      const documentURL = String(body.document_url || '').trim();
+
+      if (!personID || !contractType || !Number.isFinite(rate) || !currency || !startDate || !endDate) {
+        return json(res, 400, { error: 'person_id,contract_type,rate,currency,start_date,end_date are required' });
+      }
+      const personExists = people.some((p) => p.person_id === personID);
+      if (!personExists) return json(res, 400, { error: 'person_id not found' });
+
+      const now = new Date().toISOString();
+      const contract = {
+        contract_id: makeID('contract'),
+        person_id: personID,
+        contract_type: contractType,
+        rate,
+        currency,
+        start_date: startDate,
+        end_date: endDate,
+        payment_terms: paymentTerms,
+        document_url: documentURL,
+        status: 'active',
+        created_at: now,
+        updated_at: now
+      };
+      contracts.push(contract);
+      return json(res, 201, contract);
+    }
+
     if (req.method === 'POST' && pathname === '/api/v1/rooms') {
       const auth = requireRole(req, ['admin', 'backoffice', 'member']);
       if (!auth.ok) return json(res, auth.code, { error: auth.message });
@@ -230,6 +288,26 @@ const server = http.createServer(async (req, res) => {
       if (!room) return json(res, 404, { error: 'room not found' });
 
       return json(res, 200, { room_id: roomID, links: roomLinks(roomID) });
+    }
+
+    const contractStatusMatch = pathname.match(/^\/api\/v1\/contracts\/([^/]+)\/status$/);
+    if (req.method === 'PATCH' && contractStatusMatch) {
+      const auth = requireRole(req, ['admin', 'backoffice']);
+      if (!auth.ok) return json(res, auth.code, { error: auth.message });
+
+      const contractID = decodeURIComponent(contractStatusMatch[1]);
+      const contract = contracts.find((c) => c.contract_id === contractID);
+      if (!contract) return json(res, 404, { error: 'contract not found' });
+
+      const body = await parseBody(req);
+      const next = String(body.status || '').trim().toLowerCase();
+      if (!['active', 'ended', 'cancelled'].includes(next)) {
+        return json(res, 400, { error: 'status must be active|ended|cancelled' });
+      }
+
+      contract.status = next;
+      contract.updated_at = new Date().toISOString();
+      return json(res, 200, contract);
     }
 
     return serveStatic(req, res, pathname);

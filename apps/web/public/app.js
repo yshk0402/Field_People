@@ -5,9 +5,11 @@ const I18N = {
     roleLabel: '現在ロール',
     navPeople: 'People',
     navRooms: 'Rooms',
+    navContracts: 'Contracts',
     navActivity: 'Activity',
     peopleTitle: 'People',
     roomsTitle: 'Rooms',
+    contractsTitle: 'Contracts',
     reload: '再読込',
     createPerson: '人材を追加',
     createRoom: 'Roomを作成',
@@ -40,7 +42,23 @@ const I18N = {
     logPersonCreateFailed: '人材作成失敗',
     logRoomCreated: 'Roomを作成',
     logRoomCreateFailed: 'Room作成失敗',
-    members: 'メンバー'
+    logContractsLoaded: 'Contracts読み込み件数',
+    logContractsLoadFailed: 'Contracts読み込み失敗',
+    logContractCreated: 'Contractを作成',
+    logContractCreateFailed: 'Contract作成失敗',
+    logContractStatusUpdated: 'Contractステータス更新',
+    logContractStatusUpdateFailed: 'Contractステータス更新失敗',
+    members: 'メンバー',
+    createContract: '契約を追加',
+    contractPersonId: 'person_id',
+    contractType: 'contract_type',
+    contractRate: 'rate',
+    contractCurrency: 'currency',
+    contractStartDate: 'start_date',
+    contractEndDate: 'end_date',
+    contractPaymentTerms: 'payment_terms',
+    contractDocumentUrl: 'document_url',
+    status: 'status'
   }
 };
 
@@ -51,8 +69,10 @@ const shellEl = document.querySelector('.shell');
 const mainTitleEl = document.querySelector('.main-head h2');
 const personForm = document.getElementById('person-form');
 const roomForm = document.getElementById('room-form');
+const contractForm = document.getElementById('contract-form');
 const peopleList = document.getElementById('people-list');
 const roomList = document.getElementById('room-list');
+const contractList = document.getElementById('contract-list');
 const logEl = document.getElementById('log');
 const sidebarToggleEl = document.getElementById('sidebar-toggle');
 const sidebarBackdropEl = document.getElementById('sidebar-backdrop');
@@ -105,6 +125,7 @@ function activatePane(target) {
   const titleMap = {
     'people-pane': 'peopleTitle',
     'rooms-pane': 'roomsTitle',
+    'contracts-pane': 'contractsTitle',
     'activity-pane': 'navActivity'
   };
   mainTitleEl.textContent = t(titleMap[target] || 'peopleTitle');
@@ -247,6 +268,48 @@ async function loadRooms() {
   }
 }
 
+async function loadContracts() {
+  try {
+    const data = await api('/api/v1/contracts');
+    contractList.innerHTML = '';
+    for (const c of data.items || []) {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="item-top">
+          <strong>${c.contract_id}</strong>
+          <span class="badge type">${c.contract_type}</span>
+        </div>
+        <div>person_id: ${c.person_id}</div>
+        <div>rate: ${c.rate} ${c.currency} / status: <span class="badge">${c.status}</span></div>
+        <div>term: ${c.start_date} ~ ${c.end_date}</div>
+        <div class="links">
+          <button class="btn ghost contract-status-btn" type="button" data-contract-id="${c.contract_id}" data-status="active">active</button>
+          <button class="btn ghost contract-status-btn" type="button" data-contract-id="${c.contract_id}" data-status="ended">ended</button>
+          <button class="btn ghost contract-status-btn" type="button" data-contract-id="${c.contract_id}" data-status="cancelled">cancelled</button>
+        </div>
+      `;
+      contractList.appendChild(li);
+    }
+    contractList.querySelectorAll('.contract-status-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        try {
+          await api(`/api/v1/contracts/${encodeURIComponent(btn.dataset.contractId)}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: btn.dataset.status })
+          });
+          log(`${t('logContractStatusUpdated')}: ${btn.dataset.contractId} -> ${btn.dataset.status}`);
+          await loadContracts();
+        } catch (e) {
+          log(`${t('logContractStatusUpdateFailed')}: ${e.message}`, true);
+        }
+      });
+    });
+    log(`${t('logContractsLoaded')}: ${data.items?.length || 0}`);
+  } catch (e) {
+    log(`${t('logContractsLoadFailed')}: ${e.message}`, true);
+  }
+}
+
 personForm.addEventListener('submit', async (ev) => {
   ev.preventDefault();
   const fd = new FormData(personForm);
@@ -330,11 +393,37 @@ roomForm.addEventListener('submit', async (ev) => {
   }
 });
 
+contractForm.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const fd = new FormData(contractForm);
+  const body = {
+    person_id: fd.get('person_id'),
+    contract_type: fd.get('contract_type'),
+    rate: Number(fd.get('rate')),
+    currency: fd.get('currency'),
+    start_date: fd.get('start_date'),
+    end_date: fd.get('end_date'),
+    payment_terms: fd.get('payment_terms'),
+    document_url: fd.get('document_url')
+  };
+  try {
+    const created = await api('/api/v1/contracts', { method: 'POST', body: JSON.stringify(body) });
+    log(`${t('logContractCreated')}: ${created.contract_id}`);
+    contractForm.reset();
+    await loadContracts();
+    activatePane('contracts-pane');
+  } catch (e) {
+    log(`${t('logContractCreateFailed')}: ${e.message}`, true);
+  }
+});
+
 document.getElementById('reload-people').addEventListener('click', loadPeople);
 document.getElementById('reload-rooms').addEventListener('click', loadRooms);
+document.getElementById('reload-contracts').addEventListener('click', loadContracts);
 roleEl.addEventListener('change', async () => {
   await loadPeople();
   await loadRooms();
+  await loadContracts();
 });
 
 navItems.forEach((btn) => {
@@ -369,3 +458,4 @@ updateSidebarToggleLabel();
 activatePane('people-pane');
 await loadPeople();
 await loadRooms();
+await loadContracts();

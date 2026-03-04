@@ -294,6 +294,13 @@ button {
   font-weight: 700;
 }
 
+.links button {
+  width: auto;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
 .detail {
   border: 1px solid var(--line);
   border-radius: 16px;

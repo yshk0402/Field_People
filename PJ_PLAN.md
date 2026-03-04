@@ -212,3 +212,7 @@ T1-03 -> T1-04 -> T2-01 -> T2-02 -> T2-03 -> T2-07 -> T2-09 -> T3-01 -> T3-02 ->
    - 3ペイン（Workspace / Channel / Detail）構成へ変更
    - 配色を白背景・赤キーカラー・黒文字に統一
    - 将来の日本語完全対応に向けて文言辞書（i18n雛形）を導入
+12. Contracts機能の初期実装を追加（T2-03先行）
+   - `GET/POST /api/v1/contracts`
+   - `PATCH /api/v1/contracts/{contractID}/status`
+   - WebデモにContracts作成フォーム・一覧・ステータス更新UIを追加
